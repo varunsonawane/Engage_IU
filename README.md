@@ -2,6 +2,8 @@
 
 Built for the **Luddy Hacks 24-Hour Hackathon** : Dynamic Leaderboard/Ranking System case (Graduate Team).
 
+Live at: **[engage.mooo.com](http://engage.mooo.com)**
+
 Students earn points by entering event check-in codes after attending IU events. A weekly leaderboard ranks participants by total points, with live updates via Server-Sent Events. Admins manage everything through a protected dashboard.
 
 ---
@@ -52,9 +54,9 @@ cd engageiu
 docker-compose up --build
 ```
 
-- App: http://localhost:8000
-- Interactive API docs: http://localhost:8000/docs
-- Admin panel: http://localhost:8000/admin
+- App: http://engage.mooo.com (live) or http://localhost:8000 (local)
+- Interactive API docs: http://engage.mooo.com/docs
+- Admin panel: http://engage.mooo.com/admin
 
 ### Without Docker
 
@@ -98,7 +100,7 @@ Override via env: `ADMIN_USERNAME`, `ADMIN_PASSWORD`, `SECRET_KEY`
 | POST | `/checkin` | Public | Student self check-in with event code |
 | GET | `/students/search` | Public | Search students by name or username |
 
-**Explore interactively:** [http://localhost:8000/docs](http://localhost:8000/docs) (Swagger UI)
+**Explore interactively:** [http://engage.mooo.com/docs](http://engage.mooo.com/docs) (Swagger UI)
 
 ---
 
