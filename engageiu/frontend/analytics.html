@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EngageIU — Analytics</title>
+  <link rel="stylesheet" href="/static/assets/style.css">
+  <style>
+    /* ── Analytics-specific styles ──────────────────────────────────── */
+    .an-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .an-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .an-card .label {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 0.4rem;
+    }
+
+    .an-card .value {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #990000;
+      line-height: 1;
+    }
+
+    .an-card .sub {
+      font-size: 0.78rem;
+      color: #bbb;
+      margin-top: 0.25rem;
+    }
+
+    .panels-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .panel-title {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 1.25rem;
+      font-weight: 700;
+    }
+
+    /* Score distribution */
+    .dist-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .dist-label {
+      font-size: 0.78rem;
+      color: #888;
+      width: 80px;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .dist-bar-bg {
+      flex: 1;
+      background: #f0f0f0;
+      border-radius: 4px;
+      height: 20px;
+      overflow: hidden;
+    }
+
+    .dist-bar-fill {
+      height: 100%;
+      background: #990000;
+      border-radius: 4px;
+      transition: width 0.6s ease;
+    }
+
+    .dist-count {
+      font-size: 0.78rem;
+      color: #555;
+      width: 35px;
+      font-weight: 600;
+    }
+
+    /* Box plot */
+    .boxplot-header {
+      display: flex;
+      justify-content: space-around;
+      margin-bottom: 0.75rem;
+    }
+
+    .bpv {
+      text-align: center;
+    }
+
+    .bpv .bpv-label {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #aaa;
+    }
+
+    .bpv .bpv-num {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    .boxplot-track {
+      position: relative;
+      height: 32px;
+      margin: 0.5rem 0;
+    }
+
+    .bp-line {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #ddd;
+      transform: translateY(-50%);
+    }
+
+    .bp-box {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      background: #990000;
+      opacity: 0.75;
+      border-radius: 3px;
+    }
+
+    .bp-median {
+      position: absolute;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background: #f59e0b;
+    }
+
+    .bp-foot {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: #aaa;
+      margin-top: 0.3rem;
+    }
+
+    /* Extra stats row */
+    .extra-row {
+      display: flex;
+      gap: 1.5rem;
+      flex-wrap: wrap;
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .extra-stat .es-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #aaa;
+    }
+
+    .extra-stat .es-value {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #333;
+    }
+
+    /* Percentile table */
+    .pct-table-wrap {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+      overflow-x: auto;
+    }
+
+    .pct-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+    }
+
+    .pct-table th {
+      text-align: left;
+      padding: 0.5rem 0.75rem;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #888;
+      border-bottom: 1px solid #eee;
+    }
+
+    .pct-table td {
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid #f5f5f5;
+      color: #333;
+    }
+
+    .pct-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    /* Highlight cards */
+    .highlight-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .hi-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .hi-card .hi-label {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #aaa;
+      margin-bottom: 0.4rem;
+    }
+
+    .hi-card .hi-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #990000;
+    }
+
+    /* Refresh badge */
+    .refresh-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.78rem;
+      color: #888;
+      margin-left: 1rem;
+    }
+
+    .refresh-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.4;
+      }
+    }
+
+    .loading-msg {
+      text-align: center;
+      padding: 3rem;
+      color: #bbb;
+    }
+
+    @media (max-width: 900px) {
+      .an-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .panels-row,
+      .highlight-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .an-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ── Navigation ──────────────────────────────────────────────────────────── -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">Engage<span>IU</span></a>
+      <div class="nav-links">
+        <a href="/">Home</a>
+        <a href="/static/events.html">Events</a>
+        <a href="/static/analytics.html" class="active">Analytics</a>
+        <a href="/static/admin.html" class="admin-nav-link hidden">Admin</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm hidden" id="btn-admin-logout">Logout</button>
+        <button class="btn btn-secondary btn-sm" id="btn-admin-login">Admin</button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ── Hero ─────────────────────────────────────────────────────────────────── -->
+  <section class="hero" style="padding:2rem 1.5rem">
+    <h1 style="font-size:1.9rem">IU Engagement <span>Analytics</span></h1>
+    <p style="margin-bottom:0">
+      Live weekly statistics for campus engagement across the IU system.
+      <span class="refresh-badge"><span class="refresh-dot"></span> Auto-refreshes every 60s</span>
+    </p>
+  </section>
+
+  <!-- ── Main content ─────────────────────────────────────────────────────────── -->
+  <main class="container section" id="analytics-content">
+    <div class="loading-msg" id="loading-msg">
+      <span class="spinner"></span> Loading analytics…
+    </div>
+    <div id="analytics-body" style="display:none">
+
+      <!-- 4 stat cards -->
+      <div class="an-grid">
+        <div class="an-card">
+          <div class="label">Mean Score</div>
+          <div class="value" id="a-mean">—</div>
+          <div class="sub">avg weekly points</div>
+        </div>
+        <div class="an-card">
+          <div class="label">Median Score</div>
+          <div class="value" id="a-median">—</div>
+          <div class="sub">midpoint score</div>
+        </div>
+        <div class="an-card">
+          <div class="label">Std Deviation</div>
+          <div class="value" id="a-std">—</div>
+          <div class="sub">score spread</div>
+        </div>
+        <div class="an-card">
+          <div class="label">Active Students</div>
+          <div class="value" id="a-students">—</div>
+          <div class="sub">with points this week</div>
+        </div>
+      </div>
+
+      <!-- Score Distribution + Box Plot -->
+      <div class="panels-row">
+        <div class="panel">
+          <div class="panel-title">Score Distribution</div>
+          <div id="dist-chart"></div>
+        </div>
+        <div class="panel">
+          <div class="panel-title">Quartile Breakdown</div>
+          <div class="boxplot-header" id="bp-header"></div>
+          <div class="boxplot-track">
+            <div class="bp-line"></div>
+            <div class="bp-box" id="bp-box"></div>
+            <div class="bp-median" id="bp-median"></div>
+          </div>
+          <div class="bp-foot">
+            <span id="bp-min">Min</span>
+            <span id="bp-max">Max</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Extra stats (IQR, Range, Variance) -->
+      <div class="extra-row">
+        <div class="extra-stat">
+          <div class="es-label">IQR</div>
+          <div class="es-value" id="a-iqr">—</div>
+        </div>
+        <div class="extra-stat">
+          <div class="es-label">Range</div>
+          <div class="es-value" id="a-range">—</div>
+        </div>
+        <div class="extra-stat">
+          <div class="es-label">Variance</div>
+          <div class="es-value" id="a-variance">—</div>
+        </div>
+        <div class="extra-stat">
+          <div class="es-label">Avg Events / Student</div>
+          <div class="es-value" id="a-avg-events">—</div>
+        </div>
+        <div class="extra-stat">
+          <div class="es-label">Weekly Growth</div>
+          <div class="es-value" id="a-growth">—</div>
+        </div>
+      </div>
+
+      <!-- Highlights: top campus + most attended event -->
+      <div class="highlight-row">
+        <div class="hi-card">
+          <div class="hi-label">Top Campus (This Week)</div>
+          <div class="hi-value" id="a-top-campus">—</div>
+        </div>
+        <div class="hi-card">
+          <div class="hi-label">Most Attended Event (This Week)</div>
+          <div class="hi-value" id="a-most-event">—</div>
+        </div>
+      </div>
+
+      <!-- Percentile ranks table -->
+      <div class="pct-table-wrap">
+        <div class="panel-title" style="margin-bottom:1rem">Percentile Ranks</div>
+        <table class="pct-table">
+          <thead>
+            <tr>
+              <th>Score</th>
+              <th>Percentile Rank</th>
+              <th>Standing</th>
+            </tr>
+          </thead>
+          <tbody id="pct-tbody"></tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ── Admin Login Modal ─────────────────────────────────────────────────────── -->
+  <div class="modal-overlay" id="admin-login-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Admin Login</h2>
+        <button class="modal-close" data-close-modal="admin-login-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="admin-login-form">
+          <div class="form-group">
+            <label for="admin-username">Username</label>
+            <input type="text" id="admin-username" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="admin-password">Password</label>
+            <input type="password" id="admin-password" required autocomplete="current-password">
+          </div>
+          <div id="admin-login-alert" class="alert hidden"></div>
+          <button type="submit" class="btn btn-primary btn-block mt-2">Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Footer ─────────────────────────────────────────────────────────────────── -->
+  <footer class="footer">
+    EngageIU &mdash; Built for Luddy Hacks &bull; Indiana University &bull;
+    <a href="/docs">API Docs</a>
+  </footer>
+
+  <script src="/static/assets/app.js"></script>
+  <script>
+    function escHtml(str) {
+      return String(str === null || str === undefined ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    function standing(pct) {
+      if (pct >= 90) return 'Top 10%';
+      if (pct >= 75) return 'Top 25%';
+      if (pct >= 50) return 'Above Average';
+      if (pct >= 25) return 'Below Average';
+      return 'Bottom 25%';
+    }
+
+    async function loadAnalytics() {
+      try {
+        var d = await api('GET', '/info');
+        document.getElementById('loading-msg').style.display = 'none';
+        document.getElementById('analytics-body').style.display = '';
+
+        document.getElementById('a-mean').textContent = d.mean || 0;
+        document.getElementById('a-median').textContent = d.median || 0;
+        document.getElementById('a-std').textContent = d.std_deviation || 0;
+        document.getElementById('a-students').textContent = d.students_with_points_this_week || 0;
+        document.getElementById('a-iqr').textContent = d.iqr !== undefined ? d.iqr : '—';
+        document.getElementById('a-range').textContent = d.range_val !== undefined ? d.range_val : '—';
+        document.getElementById('a-variance').textContent = d.variance !== undefined ? d.variance : '—';
+        document.getElementById('a-avg-events').textContent = d.avg_events_per_student !== undefined ? d.avg_events_per_student : '—';
+        document.getElementById('a-growth').textContent = d.weekly_growth_rate_pct !== null && d.weekly_growth_rate_pct !== undefined
+          ? d.weekly_growth_rate_pct + '%' : 'N/A';
+        document.getElementById('a-top-campus').textContent = d.top_campus || 'N/A';
+        document.getElementById('a-most-event').textContent = d.most_attended_event || 'N/A';
+
+        // Score distribution
+        var dist = d.score_distribution || [];
+        var maxCount = 1;
+        dist.forEach(function (b) { if (b.count > maxCount) maxCount = b.count; });
+        document.getElementById('dist-chart').innerHTML = dist.length
+          ? dist.map(function (b) {
+            var pct = Math.round(b.count / maxCount * 100);
+            return '<div class="dist-row">' +
+              '<div class="dist-label">' + escHtml(b.range) + '</div>' +
+              '<div class="dist-bar-bg"><div class="dist-bar-fill" style="width:' + pct + '%"></div></div>' +
+              '<div class="dist-count">' + b.count + '</div>' +
+              '</div>';
+          }).join('')
+          : '<p style="color:#bbb;font-size:0.9rem">No data yet.</p>';
+
+        // Box plot
+        var mn = d.min || 0, mx = d.max || 1, q1 = d.q1 || 0, q3 = d.q3 || 0, med = d.median || 0;
+        var rng = mx - mn || 1;
+        function pctOf(v) { return Math.max(0, Math.min(100, Math.round((v - mn) / rng * 100))); }
+        document.getElementById('bp-header').innerHTML =
+          '<div class="bpv"><div class="bpv-label">Q1</div><div class="bpv-num">' + q1 + '</div></div>' +
+          '<div class="bpv"><div class="bpv-label">Median</div><div class="bpv-num">' + med + '</div></div>' +
+          '<div class="bpv"><div class="bpv-label">Q3</div><div class="bpv-num">' + q3 + '</div></div>';
+        document.getElementById('bp-box').style.left = pctOf(q1) + '%';
+        document.getElementById('bp-box').style.width = Math.max(pctOf(q3) - pctOf(q1), 2) + '%';
+        document.getElementById('bp-median').style.left = pctOf(med) + '%';
+        document.getElementById('bp-min').textContent = 'Min: ' + mn;
+        document.getElementById('bp-max').textContent = 'Max: ' + mx;
+
+        // Percentile ranks table
+        var pctRanks = d.percentile_ranks || [];
+        var sorted = pctRanks.slice().sort(function (a, b) { return b.score - a.score; });
+        document.getElementById('pct-tbody').innerHTML = sorted.length
+          ? sorted.map(function (r) {
+            return '<tr>' +
+              '<td><strong>' + r.score + '</strong></td>' +
+              '<td>' + r.percentile_rank + '%</td>' +
+              '<td><span style="color:#990000;font-weight:600">' + standing(r.percentile_rank) + '</span></td>' +
+              '</tr>';
+          }).join('')
+          : '<tr><td colspan="3" style="text-align:center;color:#bbb;padding:1.5rem">No data this week yet.</td></tr>';
+
+      } catch (e) {
+        document.getElementById('loading-msg').textContent = 'Failed to load analytics: ' + e.message;
+      }
+    }
+
+    loadAnalytics();
+    setInterval(loadAnalytics, 60000);
+  </script>
+</body>
+
+</html>

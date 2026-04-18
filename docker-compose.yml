@@ -1,0 +1,38 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: varunsonawane
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: engageiu
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U varunsonawane -d engageiu"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - ADMIN_USERNAME=admin
+      - ADMIN_PASSWORD=engageiu2025
+      - DATABASE_URL=postgresql://varunsonawane:postgres@db:5432/engageiu
+      - SECRET_KEY=engageiu_secret_key_change_in_prod
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  postgres_data:

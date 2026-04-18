@@ -1,0 +1,1176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EngageIU · Admin Dashboard</title>
+  <link rel="icon" type="image/png" href="https://assets.iu.edu/brand/3.3.x/trident-large.png">
+  <link rel="stylesheet" href="/static/assets/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <style>
+    /* ── Admin dashboard — light theme ───────────────────────────────── */
+    #login-prompt { text-align: center; padding: 5rem 1rem; }
+    #login-prompt h2 { margin-bottom: 0.75rem; color: #333; }
+    #login-prompt p  { color: #666; margin-bottom: 1.5rem; }
+
+    #admin-dashboard { display: none; }
+    #admin-dashboard.visible { display: block; }
+
+    /* Stats bar — keep crimson */
+    .adm-stats { display: grid; grid-template-columns: repeat(4,1fr); gap:0; background:#7b0000; }
+    .adm-stat  { padding:1.2rem 1.5rem; border-right:1px solid rgba(255,255,255,0.15); text-align:center; }
+    .adm-stat:last-child { border-right:none; }
+    .adm-stat .s-label { font-size:0.72rem; color:rgba(255,255,255,0.7); text-transform:uppercase; letter-spacing:0.5px; }
+    .adm-stat .s-value { font-size:1.9rem; font-weight:800; color:#fff; line-height:1.1; }
+    .adm-stat .s-value.gold { color:#ffd54f; }
+
+    /* Tabs — light theme */
+    .adm-tabs { background:#fff; display:flex; gap:0; border-bottom:2px solid #e5e7eb; padding:0 1.5rem;
+                box-shadow:0 1px 3px rgba(0,0,0,0.04); }
+    .adm-tab  { background:none; border:none; border-bottom:3px solid transparent; margin-bottom:-2px;
+                padding:0.85rem 1.25rem; color:#6b7280; font-size:0.78rem; font-weight:600; letter-spacing:0.8px;
+                cursor:pointer; transition:color 0.15s,border-color 0.15s; white-space:nowrap; }
+    .adm-tab:hover  { color:#374151; }
+    .adm-tab.active { color:#990000; border-bottom-color:#990000; }
+
+    /* Tab panels — LIGHT */
+    .adm-panel { display:none; padding:1.5rem; background:#f5f6f8; min-height:60vh; }
+    .adm-panel.active { display:block; }
+
+    /* Toolbar */
+    .adm-toolbar { display:flex; align-items:center; gap:0.75rem; margin-bottom:1rem; flex-wrap:wrap; }
+    .adm-toolbar input, .adm-toolbar select {
+      background:#fff; border:1px solid #dde1e7; border-radius:5px;
+      color:#333; padding:0.45rem 0.75rem; font-size:0.85rem; outline:none;
+    }
+    .adm-toolbar input:focus, .adm-toolbar select:focus { border-color:#990000; }
+    .adm-toolbar input[type="text"] { min-width:200px; }
+    .count-lbl { color:#999; font-size:0.8rem; margin-left:auto; }
+
+    /* Table — light */
+    .adm-table-wrap { overflow-x:auto; border-radius:8px; border:1px solid #e5e7eb; background:#fff; }
+    .adm-table { width:100%; border-collapse:collapse; font-size:0.84rem; }
+    .adm-table thead tr { background:#f9fafb; }
+    .adm-table th { padding:0.7rem 0.9rem; text-align:left; font-size:0.7rem; letter-spacing:0.6px;
+                    color:#6b7280; font-weight:600; border-bottom:1px solid #e5e7eb; }
+    .adm-table td { padding:0.65rem 0.9rem; border-bottom:1px solid #f3f4f6; color:#374151; vertical-align:middle; }
+    .adm-table tbody tr:hover { background:#fafafa; }
+    .adm-table .gold   { color:#b45309; font-weight:700; }
+    .adm-table .red    { color:#dc2626; }
+    .adm-table .dim    { color:#9ca3af; font-size:0.78rem; }
+    .adm-table .strong { color:#111827; font-weight:600; }
+    .empty-row td, .loading-row td { text-align:center; padding:2.5rem; color:#9ca3af; }
+
+    /* Inline buttons */
+    .btn-xs { font-size:0.72rem; padding:0.22rem 0.55rem; border-radius:3px; border:none; cursor:pointer; font-weight:600; }
+    .btn-xs.outline { background:transparent; border:1px solid #d1d5db; color:#6b7280; }
+    .btn-xs.outline:hover { border-color:#990000; color:#990000; }
+    .btn-xs.danger  { background:transparent; border:1px solid #fca5a5; color:#dc2626; }
+    .btn-xs.danger:hover  { background:#fef2f2; }
+    .btn-xs.ghost   { background:#f3f4f6; color:#374151; }
+    .btn-xs.ghost:hover { background:#e5e7eb; }
+
+    /* Code box */
+    .code-box { font-family:monospace; font-size:0.82rem; background:#f0fdf4; border:1px solid #bbf7d0;
+                border-radius:4px; padding:0.15rem 0.45rem; color:#15803d; letter-spacing:1px; }
+    .btn-regen { background:none; border:none; color:#9ca3af; cursor:pointer; font-size:1rem;
+                 padding:0 0.3rem; line-height:1; transition:color 0.15s; }
+    .btn-regen:hover { color:#990000; }
+    .btn-qr { font-size:0.72rem !important; font-weight:700; color:#1d4ed8 !important; letter-spacing:0.5px;
+              border:1px solid #bfdbfe !important; border-radius:4px; background:#eff6ff !important;
+              padding:0.1rem 0.35rem !important; }
+    .btn-qr:hover { background:#dbeafe !important; color:#1e40af !important; }
+
+    /* Category badges */
+    .cat { display:inline-block; font-size:0.68rem; font-weight:700; padding:0.12rem 0.45rem;
+           border-radius:3px; letter-spacing:0.4px; text-transform:uppercase; }
+    .cat-Tech      { background:#eff6ff; color:#1d4ed8; }
+    .cat-Career    { background:#f0fdf4; color:#15803d; }
+    .cat-Academic  { background:#faf5ff; color:#7e22ce; }
+    .cat-Health    { background:#fff7ed; color:#c2410c; }
+    .cat-Cultural  { background:#fffbeb; color:#b45309; }
+    .cat-Social    { background:#f0fdfa; color:#0f766e; }
+    .cat-Sports    { background:#fff1f2; color:#be123c; }
+    .cat-General   { background:#f9fafb; color:#6b7280; }
+    .cat-GET       { background:#eff6ff; color:#1d4ed8; }
+    .cat-POST      { background:#f0fdf4; color:#15803d; }
+    .cat-PATCH     { background:#fffbeb; color:#b45309; }
+    .cat-DELETE    { background:#fff1f2; color:#be123c; }
+
+    /* Status badges */
+    .badge-active { background:#dcfce7; color:#15803d; font-size:0.68rem; font-weight:700;
+                    padding:0.12rem 0.5rem; border-radius:3px; }
+    .badge-past   { color:#9ca3af; font-size:0.72rem; }
+
+    /* ── Analytics — light cards ─────────────────────────────────────── */
+    .an-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+    .an-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:1.2rem 1.5rem;
+               box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+    .an-card .al { font-size:0.7rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px; }
+    .an-card .av { font-size:2rem; font-weight:800; color:#990000; margin-top:0.2rem; }
+    .an-card .av.neutral { color:#374151; }
+
+    /* Insights row */
+    .an-insights { display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; margin-bottom:1.25rem; }
+    .an-insight { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:1rem 1.25rem;
+                  box-shadow:0 1px 3px rgba(0,0,0,0.05); display:flex; align-items:center; gap:0.85rem; }
+    .an-insight-icon { font-size:1.6rem; flex-shrink:0; }
+    .an-insight-body .il { font-size:0.68rem; color:#9ca3af; text-transform:uppercase; letter-spacing:0.4px; }
+    .an-insight-body .iv { font-size:1rem; font-weight:700; color:#990000; margin-top:0.1rem; }
+
+    /* Charts row */
+    .an-panels { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin-bottom:1rem; }
+    .an-panel { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:1.25rem;
+                box-shadow:0 1px 3px rgba(0,0,0,0.05); }
+    .an-panel-title { font-size:0.72rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.5px;
+                      margin-bottom:1rem; font-weight:600; }
+
+    /* Score distribution bars */
+    .dist-bar-row { display:flex; align-items:center; gap:0.75rem; margin-bottom:0.55rem; }
+    .dist-bar-label { font-size:0.75rem; color:#6b7280; width:65px; flex-shrink:0; text-align:right; }
+    .dist-bar-track { flex:1; background:#f3f4f6; border-radius:3px; height:18px; overflow:hidden; }
+    .dist-bar-fill  { height:100%; background:#990000; border-radius:3px; transition:width 0.4s; }
+    .dist-bar-count { font-size:0.72rem; color:#9ca3af; width:28px; flex-shrink:0; }
+
+    /* Category bars (different colour per cat) */
+    .cat-bar-fill-Tech     { background:#1d4ed8; }
+    .cat-bar-fill-Career   { background:#15803d; }
+    .cat-bar-fill-Academic { background:#7e22ce; }
+    .cat-bar-fill-Health   { background:#c2410c; }
+    .cat-bar-fill-Cultural { background:#b45309; }
+    .cat-bar-fill-Social   { background:#0f766e; }
+    .cat-bar-fill-Sports   { background:#be123c; }
+    .cat-bar-fill-General  { background:#6b7280; }
+
+    /* Box plot */
+    .boxplot-wrap { padding:1.25rem 0.5rem 0.5rem; }
+    .boxplot-row  { position:relative; height:36px; }
+    .bp-line   { position:absolute; top:50%; left:0; right:0; height:1px; background:#e5e7eb; transform:translateY(-50%); }
+    .bp-box    { position:absolute; top:20%; height:60%; background:#fef2f2; border:1.5px solid #990000; border-radius:2px; }
+    .bp-median { position:absolute; top:10%; height:80%; width:2px; background:#990000; }
+    .bp-whisker-l, .bp-whisker-r { position:absolute; top:20%; height:60%; width:1px; background:#d1d5db; }
+    .boxplot-labels { display:flex; justify-content:space-between; font-size:0.7rem; color:#9ca3af; margin-top:0.3rem; }
+    .boxplot-vals { display:flex; justify-content:space-between; font-size:0.72rem; color:#6b7280; margin-bottom:0.25rem; }
+
+    /* Percentile table */
+    .pct-table { width:100%; border-collapse:collapse; font-size:0.82rem; }
+    .pct-table th { text-align:left; padding:0.4rem 0.6rem; font-size:0.68rem; color:#9ca3af; border-bottom:1px solid #e5e7eb; }
+    .pct-table td { padding:0.4rem 0.6rem; border-bottom:1px solid #f3f4f6; color:#374151; }
+    .pct-table td:last-child { font-weight:700; color:#990000; }
+
+    /* Extra chips */
+    .an-extra { display:flex; gap:0.75rem; margin-top:0.75rem; flex-wrap:wrap; }
+    .an-chip  { background:#fff; border:1px solid #e5e7eb; border-radius:6px; padding:0.5rem 1rem;
+                display:flex; flex-direction:column; align-items:center; gap:0.1rem; box-shadow:0 1px 2px rgba(0,0,0,0.04); }
+    .an-chip .cl { font-size:0.65rem; color:#9ca3af; text-transform:uppercase; letter-spacing:0.4px; }
+    .an-chip .cv { font-size:1rem; font-weight:700; color:#990000; }
+
+    /* Performance */
+    .perf-slow { color:#dc2626 !important; }
+    .perf-fast { color:#15803d !important; }
+
+    /* History filters */
+    .history-filters { display:flex; gap:0.75rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .history-filters input, .history-filters select {
+      background:#fff; border:1px solid #dde1e7; border-radius:5px;
+      color:#333; padding:0.45rem 0.75rem; font-size:0.82rem; outline:none;
+    }
+    .history-filters input:focus, .history-filters select:focus { border-color:#990000; }
+    .pagination { display:flex; align-items:center; gap:0.5rem; margin-top:1rem; }
+    .pagination button { background:#fff; border:1px solid #e5e7eb; color:#374151; border-radius:4px;
+                         padding:0.3rem 0.7rem; font-size:0.8rem; cursor:pointer; }
+    .pagination button:hover { border-color:#990000; color:#990000; }
+    .pagination button:disabled { opacity:0.35; cursor:default; }
+    .pagination .page-info { color:#9ca3af; font-size:0.8rem; }
+
+    /* Event modal */
+    .adm-modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5);
+                         z-index:200; align-items:center; justify-content:center; }
+    .adm-modal-overlay.open { display:flex; }
+    .adm-modal { background:#fff; border-radius:10px; box-shadow:0 20px 60px rgba(0,0,0,0.15);
+                 width:520px; max-width:95vw; max-height:90vh; overflow-y:auto; }
+    .adm-modal-header { display:flex; align-items:center; justify-content:space-between;
+                        padding:1.1rem 1.5rem; border-bottom:1px solid #e5e7eb; }
+    .adm-modal-header h3 { color:#111; font-size:1rem; }
+    .adm-modal-close { background:none; border:none; color:#9ca3af; font-size:1.4rem; cursor:pointer; line-height:1; padding:0 0.25rem; }
+    .adm-modal-close:hover { color:#333; }
+    .adm-modal-body { padding:1.5rem; }
+    .adm-form-group { margin-bottom:1rem; }
+    .adm-form-group label { display:block; font-size:0.72rem; color:#6b7280; text-transform:uppercase; letter-spacing:0.4px; margin-bottom:0.35rem; }
+    .adm-form-group input, .adm-form-group select, .adm-form-group textarea {
+      width:100%; background:#fff; border:1px solid #d1d5db; border-radius:5px;
+      color:#333; padding:0.55rem 0.8rem; font-size:0.9rem; outline:none; font-family:inherit;
+    }
+    .adm-form-group input:focus, .adm-form-group select:focus, .adm-form-group textarea:focus { border-color:#990000; }
+    .adm-form-row { display:grid; grid-template-columns:1fr 1fr; gap:0.75rem; }
+    .adm-modal-footer { display:flex; justify-content:flex-end; gap:0.75rem; margin-top:0.5rem; }
+    .adm-modal-err { color:#dc2626; font-size:0.82rem; margin-bottom:0.75rem; min-height:1em; }
+    .btn-primary-dark { background:#990000; color:#fff; border:none; border-radius:5px;
+                        padding:0.55rem 1.25rem; font-size:0.85rem; font-weight:600; cursor:pointer; }
+    .btn-primary-dark:hover { background:#7b0000; }
+    .btn-primary-dark:disabled { opacity:0.5; cursor:default; }
+    .btn-cancel-dark { background:transparent; color:#6b7280; border:1px solid #d1d5db; border-radius:5px;
+                       padding:0.55rem 1rem; font-size:0.85rem; cursor:pointer; }
+    .btn-cancel-dark:hover { color:#333; border-color:#9ca3af; }
+
+    @media (max-width:900px) {
+      .adm-stats { grid-template-columns:repeat(2,1fr); }
+      .an-grid   { grid-template-columns:repeat(2,1fr); }
+      .an-insights { grid-template-columns:repeat(2,1fr); }
+      .an-panels { grid-template-columns:1fr; }
+      .adm-form-row { grid-template-columns:1fr; }
+    }
+    @media (max-width:600px) {
+      .adm-stats { grid-template-columns:1fr 1fr; }
+      .adm-stat  { padding:0.9rem 0.75rem; }
+      .adm-stat .s-value { font-size:1.4rem; }
+      .adm-tabs  { padding:0 0.75rem; overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none; }
+      .adm-tabs::-webkit-scrollbar { display:none; }
+      .adm-tab   { font-size:0.68rem; padding:0.75rem 0.5rem; }
+      .adm-panel { padding:1rem 0.75rem; }
+      .adm-toolbar input[type="text"] { min-width:140px; }
+      .an-grid   { grid-template-columns:1fr 1fr; }
+      .an-insights { grid-template-columns:1fr 1fr; }
+      .history-filters { gap:0.5rem; }
+      .history-filters input, .history-filters select { width:100%; }
+    }
+    @media (max-width:400px) {
+      .adm-stats { grid-template-columns:1fr; }
+      .an-grid   { grid-template-columns:1fr; }
+      .an-insights { grid-template-columns:1fr; }
+    }
+    .pts-preset {
+      padding: 0.2rem 0.55rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1.5px solid #d1d5db;
+      border-radius: 6px;
+      background: #f9fafb;
+      color: #374151;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s, color 0.15s;
+    }
+    .pts-preset:hover, .pts-preset.active {
+      background: #990000;
+      border-color: #990000;
+      color: #fff;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Engage<span>IU</span></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/static/events.html">Events</a>
+      <a href="/static/analytics.html">Hoosiers</a>
+      <a href="/static/admin.html" class="active">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary btn-sm hidden" id="btn-admin-logout">Logout</button>
+      <button class="btn btn-secondary btn-sm" id="btn-admin-login">Admin</button>
+    </div>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- ── Not-logged-in prompt ───────────────────────────────────────────────── -->
+<div id="login-prompt" class="container section" style="display:none;text-align:center;padding:5rem 1rem">
+  <h2 style="margin-bottom:0.75rem">Admin Access Required</h2>
+  <p style="color:#666;margin-bottom:1.5rem">Please log in with your admin credentials to view the dashboard.</p>
+  <button class="btn btn-primary" onclick="openModal('admin-login-modal')">Login as Admin</button>
+</div>
+
+<!-- ── Admin Dashboard ────────────────────────────────────────────────────── -->
+<div id="admin-dashboard">
+
+  <!-- Stats bar -->
+  <div class="adm-stats">
+    <div class="adm-stat">
+      <div class="s-label">Total Students</div>
+      <div class="s-value" id="s-total-students">—</div>
+    </div>
+    <div class="adm-stat">
+      <div class="s-label">Check-ins Today</div>
+      <div class="s-value gold" id="s-checkins-today">—</div>
+    </div>
+    <div class="adm-stat">
+      <div class="s-label">Points This Week</div>
+      <div class="s-value gold" id="s-total-pts">—</div>
+    </div>
+    <div class="adm-stat">
+      <div class="s-label">Active Events</div>
+      <div class="s-value" id="s-active-events">—</div>
+    </div>
+  </div>
+
+  <!-- Tab bar -->
+  <div class="adm-tabs">
+    <button class="adm-tab active" data-tab="students">STUDENTS</button>
+    <button class="adm-tab" data-tab="events">EVENTS</button>
+    <button class="adm-tab" data-tab="analytics">ANALYTICS</button>
+    <button class="adm-tab" data-tab="performance">API PERFORMANCE</button>
+    <button class="adm-tab" data-tab="history">HISTORY</button>
+  </div>
+
+  <!-- ── STUDENTS panel ──────────────────────────────────────────────────── -->
+  <div class="adm-panel active" id="panel-students">
+    <div class="adm-toolbar">
+      <input type="text" id="student-search" placeholder="Search by name or username…">
+      <button class="btn btn-sm btn-outline" id="btn-export-csv">Export CSV</button>
+      <span class="count-lbl" id="student-count-lbl"></span>
+    </div>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>RANK</th><th>NAME</th><th>USERNAME</th><th>CAMPUS</th>
+            <th>MAJOR</th><th>YEAR</th><th>PTS</th><th>EVENTS</th>
+            <th>JOINED</th><th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="students-tbody">
+          <tr class="loading-row"><td colspan="10">Loading students…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── EVENTS panel ────────────────────────────────────────────────────── -->
+  <div class="adm-panel" id="panel-events">
+    <div class="adm-toolbar">
+      <button class="btn btn-primary btn-sm" id="btn-new-event">+ New Event</button>
+      <button class="btn btn-sm btn-outline" id="btn-verify-urls" title="Check all event URLs and remove broken ones">Verify URLs</button>
+      <span class="count-lbl" id="events-count-lbl"></span>
+    </div>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>TITLE</th><th>CATEGORY</th><th>DATE</th><th>PTS</th>
+            <th>CHECK-INS</th><th>CODE</th><th>STATUS</th><th>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="events-tbody">
+          <tr class="loading-row"><td colspan="8">Loading events…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ANALYTICS panel ─────────────────────────────────────────────────── -->
+  <div class="adm-panel" id="panel-analytics">
+    <!-- Row 1: Stats cards -->
+    <div class="an-grid">
+      <div class="an-card"><div class="al">Mean Score</div><div class="av" id="an-mean">—</div></div>
+      <div class="an-card"><div class="al">Median Score</div><div class="av" id="an-median">—</div></div>
+      <div class="an-card"><div class="al">Std Deviation</div><div class="av" id="an-std">—</div></div>
+      <div class="an-card"><div class="al">Avg Events / Student</div><div class="av neutral" id="an-avg">—</div></div>
+    </div>
+    <!-- Row 2: Insights -->
+    <div class="an-insights">
+      <div class="an-insight">
+        <div class="an-insight-icon">🏆</div>
+        <div class="an-insight-body"><div class="il">Top Category</div><div class="iv" id="ins-top-cat">—</div></div>
+      </div>
+      <div class="an-insight">
+        <div class="an-insight-icon">📅</div>
+        <div class="an-insight-body"><div class="il">Most Active Day</div><div class="iv" id="ins-active-day">—</div></div>
+      </div>
+      <div class="an-insight">
+        <div class="an-insight-icon">👥</div>
+        <div class="an-insight-body"><div class="il">Total Students</div><div class="iv" id="ins-total-students">—</div></div>
+      </div>
+      <div class="an-insight">
+        <div class="an-insight-icon">⭐</div>
+        <div class="an-insight-body"><div class="il">Max Score</div><div class="iv" id="ins-max-score">—</div></div>
+      </div>
+    </div>
+    <!-- Row 3: Charts -->
+    <div class="an-panels">
+      <div class="an-panel">
+        <div class="an-panel-title">Score Distribution</div>
+        <div id="dist-chart"></div>
+      </div>
+      <div class="an-panel">
+        <div class="an-panel-title">Top Categories (Check-ins)</div>
+        <div id="cat-chart"></div>
+      </div>
+    </div>
+    <!-- Row 4: Box plot + Percentile ranks -->
+    <div class="an-panels">
+      <div class="an-panel">
+        <div class="an-panel-title">Quartile Breakdown</div>
+        <div class="boxplot-wrap">
+          <div class="boxplot-vals" id="bp-vals"></div>
+          <div class="boxplot-row" id="bp-row"><div class="bp-line"></div></div>
+          <div class="boxplot-labels" id="bp-labels"></div>
+        </div>
+        <div class="an-extra" id="an-extra"></div>
+      </div>
+      <div class="an-panel">
+        <div class="an-panel-title">Percentile Ranks</div>
+        <table class="pct-table">
+          <thead><tr><th>Percentile</th><th>Score Range</th><th>Range</th></tr></thead>
+          <tbody id="pct-tbody"><tr><td colspan="3" style="color:#9ca3af">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── API PERFORMANCE panel ───────────────────────────────────────────── -->
+  <div class="adm-panel" id="panel-performance">
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>ENDPOINT</th><th>METHOD</th><th>CALLS</th>
+            <th>AVG (ms)</th><th>MIN (ms)</th><th>MAX (ms)</th>
+          </tr>
+        </thead>
+        <tbody id="perf-tbody">
+          <tr class="loading-row"><td colspan="6">Loading performance data…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── HISTORY panel ───────────────────────────────────────────────────── -->
+  <div class="adm-panel" id="panel-history">
+    <div class="history-filters">
+      <input type="text" id="h-name"     placeholder="Student Name…" style="min-width:160px">
+      <input type="text" id="h-username" placeholder="IU Username…"  style="min-width:150px">
+      <select id="h-category">
+        <option value="">All Categories</option>
+        <option>Tech</option><option>Academic</option><option>Career</option>
+        <option>Health</option><option>Cultural</option><option>Social</option>
+        <option>Sports</option>
+      </select>
+      <input type="date" id="h-start" title="Start date">
+      <input type="date" id="h-end"   title="End date">
+      <button class="btn btn-sm btn-outline" id="btn-h-search">Search</button>
+      <button class="btn btn-sm" id="btn-h-reset" style="background:#2a2a2a;color:#ccc;border:none">Reset</button>
+    </div>
+    <div class="adm-table-wrap">
+      <table class="adm-table">
+        <thead>
+          <tr>
+            <th>#</th><th>STUDENT</th><th>USERNAME</th><th>EVENT</th>
+            <th>CATEGORY</th><th>CAMPUS</th><th>PTS</th><th>CHECKED IN</th>
+          </tr>
+        </thead>
+        <tbody id="history-tbody">
+          <tr class="loading-row"><td colspan="8">Loading history…</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <button id="h-prev">&#8592; Prev</button>
+      <span class="page-info" id="h-page-info"></span>
+      <button id="h-next">Next &#8594;</button>
+    </div>
+  </div>
+
+</div><!-- /#admin-dashboard -->
+
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal" style="max-width:340px;text-align:center">
+    <div class="modal-header">
+      <h2 id="qr-modal-title">Check-In QR Code</h2>
+      <button class="modal-close" data-close-modal="qr-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:0.85rem;color:#666;margin-bottom:1rem" id="qr-modal-subtitle"></p>
+      <div id="qr-canvas" style="display:flex;justify-content:center;margin-bottom:1rem"></div>
+      <p style="font-family:monospace;font-size:1.1rem;font-weight:700;letter-spacing:2px;color:#990000" id="qr-code-text"></p>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="admin-login-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Admin Login</h2>
+      <button class="modal-close" data-close-modal="admin-login-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label for="admin-username">Username</label>
+          <input type="text" id="admin-username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" required autocomplete="current-password">
+        </div>
+        <div id="admin-login-alert" class="alert hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block mt-2">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- ── Event Create/Edit Modal ────────────────────────────────────────────── -->
+<div class="adm-modal-overlay" id="event-modal">
+  <div class="adm-modal">
+    <div class="adm-modal-header">
+      <h3 id="event-modal-title">New Event</h3>
+      <button class="adm-modal-close" onclick="closeEventModal()">&times;</button>
+    </div>
+    <div class="adm-modal-body">
+      <input type="hidden" id="em-id">
+      <div class="adm-form-group">
+        <label>Event Title</label>
+        <input type="text" id="em-title" placeholder="Hoosier Innovation Summit" required>
+      </div>
+      <div class="adm-form-row">
+        <div class="adm-form-group">
+          <label>Campus</label>
+          <select id="em-campus" required></select>
+        </div>
+        <div class="adm-form-group">
+          <label>Category</label>
+          <select id="em-category">
+            <option>Tech</option><option>Academic</option><option>Career</option>
+            <option>Health</option><option>Cultural</option><option>Social</option>
+            <option>Sports</option><option>General</option>
+          </select>
+        </div>
+      </div>
+      <div class="adm-form-row">
+        <div class="adm-form-group">
+          <label>Points Reward
+            <span style="font-size:0.75rem;font-weight:400;color:#888;margin-left:4px">— more points = more important event</span>
+          </label>
+          <input type="number" id="em-points" value="10" min="1" required>
+          <div style="display:flex;gap:0.35rem;margin-top:0.4rem;flex-wrap:wrap">
+            <button type="button" class="pts-preset" data-pts="5">5 — Minor</button>
+            <button type="button" class="pts-preset" data-pts="10">10 — Standard</button>
+            <button type="button" class="pts-preset" data-pts="25">25 — Important</button>
+            <button type="button" class="pts-preset" data-pts="50">50 — Major</button>
+            <button type="button" class="pts-preset" data-pts="100">100 — Flagship</button>
+          </div>
+        </div>
+        <div class="adm-form-group">
+          <label>Date &amp; Time</label>
+          <input type="datetime-local" id="em-date" required>
+        </div>
+      </div>
+      <div class="adm-form-group">
+        <label>Event URL (optional)</label>
+        <input type="url" id="em-url" placeholder="https://events.iu.edu/…">
+      </div>
+      <div class="adm-form-group">
+        <label>Description (optional)</label>
+        <textarea id="em-desc" rows="3"></textarea>
+      </div>
+      <div class="adm-modal-err" id="em-err"></div>
+      <div class="adm-modal-footer">
+        <button class="btn-cancel-dark" onclick="closeEventModal()">Cancel</button>
+        <button class="btn-primary-dark" id="em-submit">Create Event</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Footer ─────────────────────────────────────────────────────────────── -->
+<footer class="footer">
+  EngageIU &bull; Built for Luddy Hacks &bull; Indiana University &bull;
+  <a href="/docs">API Docs</a>
+</footer>
+
+<script src="/static/assets/app.js"></script>
+<script>
+'use strict';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function esc(str) {
+  return String(str == null ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function fmtDate(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleDateString('en-US', { month:'short', day:'numeric', year:'numeric' });
+}
+
+function fmtDateTime(iso) {
+  if (!iso) return '—';
+  return new Date(iso).toLocaleString('en-US', { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+}
+
+// ── Auth check ───────────────────────────────────────────────────────────────
+
+function initPage() {
+  if (!isAdmin()) {
+    document.getElementById('login-prompt').style.display = 'block';
+    // Auto-open login modal for convenience
+    setTimeout(function() { openModal('admin-login-modal'); }, 100);
+    return;
+  }
+  document.getElementById('admin-dashboard').classList.add('visible');
+  loadStatsBar();
+  loadStudents();   // default tab
+}
+
+// Override the shared login handler to redirect to reload (dashboard will appear)
+// app.js handleAdminLogin already calls setToken + location.reload — works correctly.
+
+// ── Stats bar ────────────────────────────────────────────────────────────────
+
+function loadStatsBar() {
+  api('GET', '/admin/students', null, true).then(function(data) {
+    document.getElementById('s-total-students').textContent = data.total_students;
+    document.getElementById('s-checkins-today').textContent = data.checkins_today;
+    var total = 0;
+    (data.students || []).forEach(function(s) { total += (s.weekly_points || 0); });
+    document.getElementById('s-total-pts').textContent = total;
+  }).catch(function(){});
+
+  api('GET', '/events?upcoming_only=false', null, true).then(function(evts) {
+    var now = new Date();
+    var active = (evts || []).filter(function(ev) { return new Date(ev.event_date) >= now; });
+    document.getElementById('s-active-events').textContent = active.length;
+  }).catch(function(){});
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+
+var tabLoaded = {};
+
+document.querySelectorAll('.adm-tab').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.adm-tab').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    var tab = btn.dataset.tab;
+    document.querySelectorAll('.adm-panel').forEach(function(p) { p.classList.remove('active'); });
+    document.getElementById('panel-' + tab).classList.add('active');
+    if (!tabLoaded[tab]) {
+      tabLoaded[tab] = true;
+      if (tab === 'events')      loadEventsTab();
+      if (tab === 'analytics')   loadAnalytics();
+      if (tab === 'performance') loadPerformance();
+      if (tab === 'history')     loadHistory();
+    }
+  });
+});
+
+// ── STUDENTS ─────────────────────────────────────────────────────────────────
+
+var allStudents = [];
+
+function loadStudents() {
+  document.getElementById('students-tbody').innerHTML =
+    '<tr class="loading-row"><td colspan="10">Loading students…</td></tr>';
+  api('GET', '/admin/students', null, true).then(function(data) {
+    allStudents = data.students || [];
+    renderStudents(allStudents);
+    document.getElementById('student-count-lbl').textContent = allStudents.length + ' students';
+    document.getElementById('s-total-students').textContent = data.total_students;
+    document.getElementById('s-checkins-today').textContent = data.checkins_today;
+    var total = 0;
+    allStudents.forEach(function(s) { total += (s.weekly_points || 0); });
+    document.getElementById('s-total-pts').textContent = total;
+  }).catch(function(e) {
+    document.getElementById('students-tbody').innerHTML =
+      '<tr class="loading-row"><td colspan="10" style="color:#ef5350">' + esc(e.message) + '</td></tr>';
+  });
+}
+
+function renderStudents(list) {
+  var tbody = document.getElementById('students-tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="10">No students found.</td></tr>';
+    return;
+  }
+  var denseRank = 0, prevPts = null;
+  tbody.innerHTML = list.map(function(s) {
+    if (s.weekly_points !== prevPts) { denseRank++; prevPts = s.weekly_points; }
+    var rank = denseRank;
+    var rankHtml = rank <= 3
+      ? '<span style="color:#ffd54f;font-weight:800">#' + rank + '</span>'
+      : '<span class="dim">#' + rank + '</span>';
+    return '<tr>' +
+      '<td>' + rankHtml + '</td>' +
+      '<td class="strong">' + esc(s.name) + '</td>' +
+      '<td class="dim">@' + esc(s.iu_username) + '</td>' +
+      '<td>' + esc(s.campus) + '</td>' +
+      '<td class="dim">' + esc(s.major || '—') + '</td>' +
+      '<td class="dim">' + esc(s.year || '—') + '</td>' +
+      '<td class="gold">' + (s.weekly_points || 0) + '</td>' +
+      '<td style="text-align:center">' + (s.events_attended || 0) + '</td>' +
+      '<td class="dim">' + (s.created_at ? s.created_at.slice(0,10) : '—') + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn-xs outline" onclick="editBonusPts(' + s.id + ',' + (s.bonus_points||0) + ')">Edit Pts</button> ' +
+        '<button class="btn-xs danger"  onclick="deleteStudent(' + s.id + ',' + JSON.stringify(s.name) + ')">Delete</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+// Search filter
+var studentSearchTimer;
+document.getElementById('student-search').addEventListener('input', function() {
+  clearTimeout(studentSearchTimer);
+  var q = this.value.toLowerCase().trim();
+  studentSearchTimer = setTimeout(function() {
+    var filtered = q
+      ? allStudents.filter(function(s) {
+          return s.name.toLowerCase().indexOf(q) !== -1 || s.iu_username.toLowerCase().indexOf(q) !== -1;
+        })
+      : allStudents;
+    renderStudents(filtered);
+    document.getElementById('student-count-lbl').textContent = filtered.length + ' students';
+  }, 200);
+});
+
+// Export CSV
+document.getElementById('btn-export-csv').addEventListener('click', function() {
+  if (!allStudents.length) return;
+  var hdr = 'Rank,Name,Username,Campus,Major,Year,WeeklyPoints,EventsAttended,Joined';
+  var csvRank = 0, csvPrevPts = null;
+  var rows = allStudents.map(function(s) {
+    if (s.weekly_points !== csvPrevPts) { csvRank++; csvPrevPts = s.weekly_points; }
+    return [csvRank,'"'+s.name+'"',s.iu_username,'"'+s.campus+'"',s.major||'',s.year||'',s.weekly_points,s.events_attended,s.created_at?s.created_at.slice(0,10):''].join(',');
+  });
+  var blob = new Blob([[hdr].concat(rows).join('\n')], {type:'text/csv'});
+  var a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'engageiu-students.csv'; a.click(); URL.revokeObjectURL(a.href);
+});
+
+function editBonusPts(id, cur) {
+  var val = prompt('New bonus points for student #' + id + ' (current: ' + cur + '):', cur);
+  if (val === null) return;
+  var pts = parseInt(val, 10);
+  if (isNaN(pts)) { alert('Invalid number.'); return; }
+  api('PATCH', '/admin/students/' + id, {bonus_points: pts}, true)
+    .then(function() { loadStudents(); })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function deleteStudent(id, name) {
+  if (!confirm('Delete "' + name + '"? All their attendance records will also be removed.')) return;
+  api('DELETE', '/admin/students/' + id, null, true)
+    .then(function() { loadStudents(); })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+// ── EVENTS ───────────────────────────────────────────────────────────────────
+
+var allAdminEvents = [];
+
+// Populate campus dropdown in event modal
+CAMPUSES.forEach(function(c) {
+  var o = document.createElement('option');
+  o.value = c; o.textContent = c;
+  document.getElementById('em-campus').appendChild(o);
+});
+
+function loadEventsTab() {
+  document.getElementById('events-tbody').innerHTML =
+    '<tr class="loading-row"><td colspan="8">Loading events…</td></tr>';
+  api('GET', '/events?upcoming_only=false', null, true).then(function(evts) {
+    allAdminEvents = evts || [];
+    renderEventsTable(allAdminEvents);
+    document.getElementById('events-count-lbl').textContent = allAdminEvents.length + ' events';
+    var active = allAdminEvents.filter(function(ev) { return new Date(ev.event_date) >= new Date(); });
+    document.getElementById('s-active-events').textContent = active.length;
+  }).catch(function(e) {
+    document.getElementById('events-tbody').innerHTML =
+      '<tr class="loading-row"><td colspan="8" style="color:#ef5350">' + esc(e.message) + '</td></tr>';
+  });
+}
+
+function catClass(cat) {
+  return 'cat cat-' + (cat || 'General').replace(/[^a-zA-Z]/g, '');
+}
+
+function renderEventsTable(list) {
+  var tbody = document.getElementById('events-tbody');
+  if (!list.length) {
+    tbody.innerHTML = '<tr class="empty-row"><td colspan="8">No events found.</td></tr>';
+    return;
+  }
+  var now = new Date();
+  tbody.innerHTML = list.map(function(ev) {
+    var active = new Date(ev.event_date) >= now;
+    var status = active
+      ? '<span class="badge-active">ACTIVE</span>'
+      : '<span class="badge-past">PAST</span>';
+    return '<tr>' +
+      '<td class="strong">' + esc(ev.title) + '</td>' +
+      '<td><span class="' + catClass(ev.category) + '">' + esc(ev.category || 'General') + '</span></td>' +
+      '<td class="dim">' + fmtDate(ev.event_date) + '</td>' +
+      '<td class="gold">' + ev.points + '</td>' +
+      '<td style="text-align:center">' + (ev.attendees || 0) + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<span class="code-box">' + esc(ev.check_in_code || '—') + '</span>' +
+        '<button class="btn-regen" title="Regenerate code" onclick="regenCode(' + ev.id + ')">&#8635;</button>' +
+        '<button class="btn-regen btn-qr" title="Show QR code" data-qr-code="' + esc(ev.check_in_code || '') + '" data-qr-title="' + esc(ev.title) + '" onclick="handleQR(this)">QR</button>' +
+      '</td>' +
+      '<td>' + status + '</td>' +
+      '<td style="white-space:nowrap">' +
+        '<button class="btn-xs outline" onclick="openEditEvent(' + ev.id + ')">Edit</button> ' +
+        '<button class="btn-xs danger"  onclick="deleteEvent(' + ev.id + ',' + JSON.stringify(ev.title) + ')">Delete</button>' +
+      '</td>' +
+    '</tr>';
+  }).join('');
+}
+
+function handleQR(btn) {
+  var code = btn.getAttribute('data-qr-code');
+  var title = btn.getAttribute('data-qr-title');
+  showQR(code, title);
+}
+
+function showQR(code, title) {
+  document.getElementById('qr-modal-title').textContent = title || 'Check-In QR Code';
+  document.getElementById('qr-modal-subtitle').textContent = 'Students scan this to check in';
+  document.getElementById('qr-code-text').textContent = code;
+  var container = document.getElementById('qr-canvas');
+  container.innerHTML = '';
+  new QRCode(container, {
+    text: code || 'INVALID',
+    width: 220,
+    height: 220,
+    colorDark: '#990000',
+    colorLight: '#ffffff',
+    correctLevel: QRCode.CorrectLevel.M
+  });
+  openModal('qr-modal');
+}
+
+function regenCode(id) {
+  if (!confirm('Regenerate code? The old code stops working immediately.')) return;
+  api('POST', '/events/' + id + '/regenerate-code', null, true)
+    .then(function() { loadEventsTab(); })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+function deleteEvent(id, title) {
+  if (!confirm('Delete "' + title + '"? All check-in records for this event will also be removed.')) return;
+  api('DELETE', '/events/' + id, null, true)
+    .then(function() { loadEventsTab(); loadStatsBar(); })
+    .catch(function(e) { alert('Error: ' + e.message); });
+}
+
+// Event create/edit modal
+var editingEventId = null;
+
+function openEventModal() {
+  document.getElementById('event-modal').classList.add('open');
+  syncPtsPresets();
+}
+function closeEventModal() {
+  document.getElementById('event-modal').classList.remove('open');
+  document.getElementById('em-err').textContent = '';
+}
+
+// Points preset buttons
+function syncPtsPresets() {
+  var cur = parseInt(document.getElementById('em-points').value, 10);
+  document.querySelectorAll('.pts-preset').forEach(function(btn) {
+    btn.classList.toggle('active', parseInt(btn.dataset.pts, 10) === cur);
+  });
+}
+document.querySelectorAll('.pts-preset').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.getElementById('em-points').value = this.dataset.pts;
+    syncPtsPresets();
+  });
+});
+document.getElementById('em-points').addEventListener('input', syncPtsPresets);
+
+document.getElementById('btn-verify-urls').addEventListener('click', async function() {
+  const btn = this;
+  btn.disabled = true;
+  btn.textContent = 'Verifying…';
+  try {
+    const result = await api('POST', '/admin/verify-event-urls', null, true);
+    const msg = `Checked ${result.checked} URLs. ${result.valid} valid, ${result.removed} removed.`;
+    if (result.removed > 0) {
+      const names = result.removed_events.map(e => e.title).join(', ');
+      alert(msg + '\n\nRemoved URLs for: ' + names);
+    } else {
+      alert(msg + ' All URLs are working!');
+    }
+    loadEventsTab();
+  } catch (err) {
+    alert('Error verifying URLs: ' + err.message);
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Verify URLs';
+  }
+});
+
+document.getElementById('btn-new-event').addEventListener('click', function() {
+  editingEventId = null;
+  document.getElementById('event-modal-title').textContent = 'New Event';
+  document.getElementById('em-submit').textContent = 'Create Event';
+  document.getElementById('em-id').value = '';
+  document.getElementById('em-title').value = '';
+  document.getElementById('em-points').value = 10;
+  document.getElementById('em-date').value = '';
+  document.getElementById('em-url').value = '';
+  document.getElementById('em-desc').value = '';
+  document.getElementById('em-err').textContent = '';
+  openEventModal();
+});
+
+function openEditEvent(id) {
+  var ev = allAdminEvents.find(function(e) { return e.id === id; });
+  if (!ev) return;
+  editingEventId = id;
+  document.getElementById('event-modal-title').textContent = 'Edit Event';
+  document.getElementById('em-submit').textContent = 'Save Changes';
+  document.getElementById('em-id').value = id;
+  document.getElementById('em-title').value = ev.title || '';
+  document.getElementById('em-campus').value = ev.campus || '';
+  document.getElementById('em-category').value = ev.category || 'General';
+  document.getElementById('em-points').value = ev.points || 10;
+  if (ev.event_date) {
+    var dt = new Date(ev.event_date);
+    document.getElementById('em-date').value = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000).toISOString().slice(0,16);
+  }
+  document.getElementById('em-url').value = ev.event_url || '';
+  document.getElementById('em-desc').value = ev.description || '';
+  document.getElementById('em-err').textContent = '';
+  openEventModal();
+}
+
+document.getElementById('em-submit').addEventListener('click', function() {
+  var title    = document.getElementById('em-title').value.trim();
+  var campus   = document.getElementById('em-campus').value;
+  var category = document.getElementById('em-category').value;
+  var points   = parseInt(document.getElementById('em-points').value, 10);
+  var dateVal  = document.getElementById('em-date').value;
+  var url      = document.getElementById('em-url').value.trim();
+  var desc     = document.getElementById('em-desc').value.trim();
+  var errEl    = document.getElementById('em-err');
+  errEl.textContent = '';
+
+  if (!title || !campus || !dateVal || isNaN(points)) {
+    errEl.textContent = 'Please fill in all required fields.';
+    return;
+  }
+
+  var btn = document.getElementById('em-submit');
+  btn.disabled = true;
+
+  var body = {
+    title: title, campus: campus, category: category,
+    points: points, event_date: new Date(dateVal).toISOString(),
+    event_url: url || null, description: desc || null,
+  };
+
+  var req = editingEventId
+    ? api('PATCH', '/events/' + editingEventId, body, true)
+    : api('POST',  '/events', body, true);
+
+  req.then(function() {
+    closeEventModal();
+    loadEventsTab();
+    tabLoaded['events'] = true;
+  }).catch(function(e) {
+    errEl.textContent = e.message;
+  }).finally(function() {
+    btn.disabled = false;
+  });
+});
+
+// ── ANALYTICS ────────────────────────────────────────────────────────────────
+
+function loadAnalytics() {
+  api('GET', '/info').then(function(d) {
+    // Stat cards
+    document.getElementById('an-mean').textContent   = d.mean   != null ? d.mean   : '—';
+    document.getElementById('an-median').textContent = d.median != null ? d.median : '—';
+    document.getElementById('an-std').textContent    = d.std_deviation != null ? d.std_deviation : '—';
+    document.getElementById('an-avg').textContent    = d.avg_events_per_student != null ? d.avg_events_per_student : '—';
+
+    // Insights row
+    document.getElementById('ins-top-cat').textContent         = d.top_category || '—';
+    document.getElementById('ins-active-day').textContent      = d.most_active_day || '—';
+    document.getElementById('ins-total-students').textContent  = d.total_students != null ? d.total_students : '—';
+    document.getElementById('ins-max-score').textContent       = d.max != null ? d.max + ' pts' : '—';
+
+    // Score distribution bars
+    var dist = d.score_distribution || [];
+    var maxCnt = Math.max.apply(null, dist.map(function(b){ return b.count; }).concat([1]));
+    document.getElementById('dist-chart').innerHTML = dist.length
+      ? dist.map(function(b) {
+          var pct = Math.round(b.count / maxCnt * 100);
+          return '<div class="dist-bar-row">' +
+            '<div class="dist-bar-label">' + esc(b.bucket) + '</div>' +
+            '<div class="dist-bar-track"><div class="dist-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="dist-bar-count">' + b.count + '</div></div>';
+        }).join('')
+      : '<div style="color:#9ca3af;font-size:0.85rem;padding:1rem 0">No data yet.</div>';
+
+    // Category breakdown chart
+    var cats = d.category_breakdown || [];
+    var maxCat = Math.max.apply(null, cats.map(function(c){ return c.count; }).concat([1]));
+    document.getElementById('cat-chart').innerHTML = cats.length
+      ? cats.map(function(c) {
+          var pct = Math.round(c.count / maxCat * 100);
+          var fillClass = 'dist-bar-fill cat-bar-fill-' + (c.category || 'General').replace(/[^a-zA-Z]/g,'');
+          return '<div class="dist-bar-row">' +
+            '<div class="dist-bar-label" style="width:80px">' + esc(c.category) + '</div>' +
+            '<div class="dist-bar-track"><div class="' + fillClass + ' dist-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="dist-bar-count">' + c.count + '</div></div>';
+        }).join('')
+      : '<div style="color:#9ca3af;font-size:0.85rem;padding:1rem 0">No data yet.</div>';
+
+    // Box plot
+    var mn = d.min || 0, mx = d.max || 100, q1 = d.q1 || 0, q3 = d.q3 || 0, med = d.median || 0;
+    var rng = mx - mn || 1;
+    var pos = function(v) { return ((v - mn) / rng * 100).toFixed(1) + '%'; };
+    document.getElementById('bp-vals').innerHTML =
+      '<span>Min ' + mn + '</span><span>Q1 ' + q1 + '</span><span>Median ' + med + '</span><span>Q3 ' + q3 + '</span><span>Max ' + mx + '</span>';
+    var row = document.getElementById('bp-row');
+    row.querySelectorAll('.bp-box,.bp-median,.bp-whisker-l,.bp-whisker-r').forEach(function(el){el.remove();});
+    var wl = document.createElement('div'); wl.className = 'bp-whisker-l'; wl.style.left = pos(mn); row.appendChild(wl);
+    var wr = document.createElement('div'); wr.className = 'bp-whisker-r'; wr.style.left = pos(mx); row.appendChild(wr);
+    var box = document.createElement('div'); box.className = 'bp-box';
+    box.style.left = pos(q1); box.style.width = ((q3 - q1) / rng * 100).toFixed(1) + '%'; row.appendChild(box);
+    var medEl = document.createElement('div'); medEl.className = 'bp-median'; medEl.style.left = pos(med); row.appendChild(medEl);
+    document.getElementById('bp-labels').innerHTML = '<span>' + mn + '</span><span>' + mx + '</span>';
+
+    // Extra chips (IQR, Range, Variance, Top Campus, Most Attended) — no growth rate
+    var chips = [
+      {l:'IQR', v: d.iqr}, {l:'Range', v: d.range_val}, {l:'Variance', v: d.variance},
+      {l:'Top Campus', v: d.top_campus},
+      {l:'Most Attended', v: d.most_attended_event},
+    ];
+    document.getElementById('an-extra').innerHTML = chips.map(function(c) {
+      return '<div class="an-chip"><div class="cl">' + esc(c.l) + '</div><div class="cv">' + esc(c.v != null ? c.v : '—') + '</div></div>';
+    }).join('');
+
+    // Percentile ranks — rendered directly from backend pre-computed structure
+    var pctData = d.percentile_ranks || [];
+    document.getElementById('pct-tbody').innerHTML = pctData.length
+      ? pctData.map(function(r) {
+          return '<tr>' +
+            '<td><strong>' + esc(r.label) + '</strong> <span style="color:#9ca3af;font-size:0.75rem">(' + esc(r.description) + ')</span></td>' +
+            '<td>' + esc(r.score_range) + '</td>' +
+            '<td style="color:#6b7280;font-size:0.75rem">' + esc(r.pct_range) + '</td>' +
+          '</tr>';
+        }).join('')
+      : '<tr><td colspan="3" style="color:#9ca3af">No data yet.</td></tr>';
+
+  }).catch(function(e) {
+    document.getElementById('dist-chart').innerHTML = '<div style="color:#dc2626">' + esc(e.message) + '</div>';
+  });
+}
+
+// ── API PERFORMANCE ───────────────────────────────────────────────────────────
+
+function loadPerformance() {
+  document.getElementById('perf-tbody').innerHTML =
+    '<tr class="loading-row"><td colspan="6">Loading…</td></tr>';
+  api('GET', '/performance', null, true).then(function(data) {
+    var rows = data.endpoints || [];
+    if (!rows.length) {
+      document.getElementById('perf-tbody').innerHTML =
+        '<tr class="empty-row"><td colspan="6">No data yet.</td></tr>';
+      return;
+    }
+    document.getElementById('perf-tbody').innerHTML = rows.map(function(r) {
+      var avgClass = r.avg_ms > 200 ? 'perf-slow' : r.avg_ms < 50 ? 'perf-fast' : '';
+      return '<tr>' +
+        '<td class="strong">' + esc(r.endpoint) + '</td>' +
+        '<td><span class="' + catClass(r.method) + '" style="font-size:0.7rem">' + esc(r.method) + '</span></td>' +
+        '<td style="text-align:center">' + r.call_count + '</td>' +
+        '<td class="gold ' + avgClass + '">' + r.avg_ms + '</td>' +
+        '<td class="dim">' + r.min_ms + '</td>' +
+        '<td class="dim">' + r.max_ms + '</td>' +
+      '</tr>';
+    }).join('');
+  }).catch(function(e) {
+    document.getElementById('perf-tbody').innerHTML =
+      '<tr class="loading-row"><td colspan="6" style="color:#ef5350">' + esc(e.message) + '</td></tr>';
+  });
+}
+
+// ── HISTORY ───────────────────────────────────────────────────────────────────
+
+var historyPage = 1;
+var historyTotal = 0;
+var historyPageSize = 20;
+
+function buildHistoryParams(page) {
+  var params = 'page=' + page + '&page_size=' + historyPageSize;
+  var n  = document.getElementById('h-name').value.trim();
+  var u  = document.getElementById('h-username').value.trim();
+  var cat = document.getElementById('h-category').value;
+  var s  = document.getElementById('h-start').value;
+  var en = document.getElementById('h-end').value;
+  if (n)   params += '&name='        + encodeURIComponent(n);
+  if (u)   params += '&iu_username=' + encodeURIComponent(u);
+  if (cat) params += '&category='    + encodeURIComponent(cat);
+  if (s)   params += '&start_date='  + s;
+  if (en)  params += '&end_date='    + en;
+  return params;
+}
+
+function loadHistory(page) {
+  page = page || 1;
+  historyPage = page;
+  document.getElementById('history-tbody').innerHTML =
+    '<tr class="loading-row"><td colspan="8">Loading…</td></tr>';
+  api('GET', '/history?' + buildHistoryParams(page), null, true).then(function(data) {
+    historyTotal = data.total;
+    var totalPages = data.total_pages || 1;
+    var items = data.items || [];
+    if (!items.length) {
+      document.getElementById('history-tbody').innerHTML =
+        '<tr class="empty-row"><td colspan="8">No records found.</td></tr>';
+    } else {
+      var offset = (page - 1) * historyPageSize;
+      document.getElementById('history-tbody').innerHTML = items.map(function(r, i) {
+        return '<tr>' +
+          '<td class="dim">' + (offset + i + 1) + '</td>' +
+          '<td class="strong">' + esc(r.student_name) + '</td>' +
+          '<td class="dim">@' + esc(r.iu_username) + '</td>' +
+          '<td>' + esc(r.event_name) + '</td>' +
+          '<td><span class="' + catClass(r.event_category) + '">' + esc(r.event_category) + '</span></td>' +
+          '<td class="dim">' + esc(r.campus) + '</td>' +
+          '<td class="gold">' + r.points_earned + '</td>' +
+          '<td class="dim">' + fmtDateTime(r.checked_in_at) + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+    document.getElementById('h-page-info').textContent =
+      'Page ' + page + ' of ' + totalPages + ' (' + historyTotal + ' total)';
+    document.getElementById('h-prev').disabled = (page <= 1);
+    document.getElementById('h-next').disabled = (page >= totalPages);
+  }).catch(function(e) {
+    document.getElementById('history-tbody').innerHTML =
+      '<tr class="loading-row"><td colspan="8" style="color:#ef5350">' + esc(e.message) + '</td></tr>';
+  });
+}
+
+document.getElementById('btn-h-search').addEventListener('click', function() { loadHistory(1); });
+document.getElementById('btn-h-reset').addEventListener('click', function() {
+  document.getElementById('h-name').value = '';
+  document.getElementById('h-username').value = '';
+  document.getElementById('h-category').value = '';
+  document.getElementById('h-start').value = '';
+  document.getElementById('h-end').value = '';
+  loadHistory(1);
+});
+document.getElementById('h-prev').addEventListener('click', function() { if (historyPage > 1) loadHistory(historyPage - 1); });
+document.getElementById('h-next').addEventListener('click', function() { loadHistory(historyPage + 1); });
+
+// ── Start ─────────────────────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', function() {
+  initPage();
+});
+</script>
+</body>
+</html>

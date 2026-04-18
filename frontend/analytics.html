@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EngageIU · What are Hoosiers Like?</title>
+  <link rel="icon" type="image/png" href="https://assets.iu.edu/brand/3.3.x/trident-large.png">
+  <link rel="stylesheet" href="/static/assets/style.css">
+  <style>
+    /* ── Analytics page styles ───────────────────────────────────────── */
+    .an-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .an-card {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .an-card .al {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 0.4rem;
+    }
+    .an-card .av {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #990000;
+      line-height: 1;
+    }
+    .an-card .av.neutral { color: #374151; }
+
+    /* Insights row */
+    .an-insights {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .an-insight {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .an-insight-icon { font-size: 1.4rem; }
+    .il { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; margin-bottom: 0.2rem; }
+    .iv { font-size: 0.95rem; font-weight: 700; color: #990000; }
+
+    /* Charts row */
+    .an-panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.25rem;
+      margin-bottom: 1.5rem;
+    }
+    .an-panel {
+      background: #fff;
+      border: 1px solid #e8e8e8;
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .an-panel-title {
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: #888;
+      margin-bottom: 1rem;
+    }
+
+    /* Distribution bars */
+    .dist-bar-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .dist-bar-label { font-size: 0.75rem; color: #6b7280; width: 75px; text-align: right; flex-shrink: 0; }
+    .dist-bar-track { flex: 1; background: #f3f4f6; border-radius: 4px; height: 18px; overflow: hidden; }
+    .dist-bar-fill  { height: 100%; background: #990000; border-radius: 4px; transition: width 0.5s ease; }
+    .dist-bar-count { font-size: 0.75rem; color: #374151; font-weight: 600; width: 28px; }
+
+    /* Category bar colours */
+    .cat-bar-fill-Tech     { background: #1d4ed8; }
+    .cat-bar-fill-Academic { background: #7c3aed; }
+    .cat-bar-fill-Career   { background: #0891b2; }
+    .cat-bar-fill-Health   { background: #b45309; }
+    .cat-bar-fill-Cultural { background: #b45309; }
+    .cat-bar-fill-Social   { background: #0f766e; }
+    .cat-bar-fill-Sports   { background: #16a34a; }
+    .cat-bar-fill-General  { background: #6b7280; }
+
+    /* Box plot */
+    .boxplot-vals { display: flex; justify-content: space-around; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .boxplot-vals span { font-size: 0.75rem; color: #6b7280; }
+    .boxplot-row  { position: relative; height: 32px; margin: 0.5rem 0; }
+    .bp-line      { position: absolute; top: 50%; left: 0; right: 0; height: 2px; background: #e5e7eb; transform: translateY(-50%); }
+    .bp-box       { position: absolute; top: 0; height: 100%; background: #990000; opacity: 0.75; border-radius: 3px; }
+    .bp-median    { position: absolute; top: 0; height: 100%; width: 3px; background: #f59e0b; }
+    .bp-whisker-l,.bp-whisker-r { position: absolute; top: 20%; height: 60%; width: 2px; background: #6b7280; }
+    .boxplot-labels { display: flex; justify-content: space-between; font-size: 0.7rem; color: #aaa; margin-top: 0.25rem; }
+
+    /* Extra chips */
+    .an-extra { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 1rem; }
+    .an-chip  { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0.5rem 0.9rem; }
+    .an-chip .cl { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.7px; color: #9ca3af; }
+    .an-chip .cv { font-size: 0.9rem; font-weight: 700; color: #374151; }
+
+    /* Percentile table */
+    .pct-table { width: 100%; border-collapse: collapse; font-size: 0.88rem; }
+    .pct-table th { text-align: left; padding: 0.5rem 0.75rem; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.8px; color: #9ca3af; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+    .pct-table td { padding: 0.6rem 0.75rem; border-bottom: 1px solid #f3f4f6; color: #374151; }
+    .pct-table tr:last-child td { border-bottom: none; }
+
+    /* Technical labels */
+    .tech-tag {
+      display: inline-block;
+      font-size: 0.6rem;
+      font-weight: 600;
+      font-family: monospace;
+      color: #6b7280;
+      background: #f3f4f6;
+      border: 1px solid #e5e7eb;
+      border-radius: 4px;
+      padding: 1px 5px;
+      letter-spacing: 0.03em;
+      vertical-align: middle;
+      margin-left: 4px;
+    }
+    .tech-subtitle {
+      font-size: 0.7rem;
+      color: #9ca3af;
+      font-style: italic;
+      margin-top: -0.15rem;
+      margin-bottom: 0.75rem;
+    }
+
+    /* Loading */
+    .loading-msg { text-align: center; padding: 3rem; color: #bbb; font-size: 0.95rem; }
+
+    /* Refresh badge */
+    .refresh-badge { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.78rem; color: #888; margin-left: 1rem; }
+    .refresh-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    @media (max-width: 900px) {
+      .an-grid, .an-insights { grid-template-columns: repeat(2, 1fr); }
+      .an-panels { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 500px) {
+      .an-grid, .an-insights { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Engage<span>IU</span></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/static/events.html">Events</a>
+      <a href="/static/analytics.html" class="active">Hoosiers</a>
+      <a href="/static/admin.html" class="admin-nav-link hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary btn-sm hidden" id="btn-admin-logout">Logout</button>
+      <button class="btn btn-secondary btn-sm" id="btn-admin-login">Admin</button>
+    </div>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+<section class="hero" style="padding:2rem 1.5rem">
+  <h1 style="font-size:1.9rem">What are <span>Hoosiers Like?</span></h1>
+  <p style="margin-bottom:0">
+    A snapshot of how IU students engage with campus life this week.
+    <span class="refresh-badge"><span class="refresh-dot"></span> Live data</span>
+  </p>
+</section>
+
+
+<main class="container section">
+  <div class="loading-msg" id="loading-msg">Loading analytics…</div>
+  <div id="analytics-body" style="display:none">
+
+    <!-- Row 1: Stat cards -->
+    <div class="an-grid">
+      <div class="an-card">
+        <div class="al">Average Points <span class="tech-tag">mean</span></div>
+        <div class="av" id="an-mean">—</div>
+      </div>
+      <div class="an-card">
+        <div class="al">Typical Hoosier <span class="tech-tag">median</span></div>
+        <div class="av" id="an-median">—</div>
+      </div>
+      <div class="an-card">
+        <div class="al">How Spread Out <span class="tech-tag">std deviation</span></div>
+        <div class="av" id="an-std">—</div>
+      </div>
+      <div class="an-card">
+        <div class="al">Events Per Person <span class="tech-tag">avg attendance</span></div>
+        <div class="av neutral" id="an-avg">—</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Insights -->
+    <div class="an-insights">
+      <div class="an-insight">
+        <div class="an-insight-icon">🎓</div>
+        <div class="an-insight-body">
+          <div class="il">Favorite Type of Event <span class="tech-tag">top category</span></div>
+          <div class="iv" id="ins-top-cat">—</div>
+        </div>
+      </div>
+      <div class="an-insight">
+        <div class="an-insight-icon">📅</div>
+        <div class="an-insight-body">
+          <div class="il">Most Popular Day <span class="tech-tag">peak day</span></div>
+          <div class="iv" id="ins-active-day">—</div>
+        </div>
+      </div>
+      <div class="an-insight">
+        <div class="an-insight-icon">👥</div>
+        <div class="an-insight-body">
+          <div class="il">Hoosiers Participating <span class="tech-tag">n</span></div>
+          <div class="iv" id="ins-total-students">—</div>
+        </div>
+      </div>
+      <div class="an-insight">
+        <div class="an-insight-icon">🏅</div>
+        <div class="an-insight-body">
+          <div class="il">Highest Score This Week <span class="tech-tag">max</span></div>
+          <div class="iv" id="ins-max-score">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Score Distribution + Top Categories -->
+    <div class="an-panels">
+      <div class="an-panel">
+        <div class="an-panel-title">How Points Spread Out</div>
+        <div class="tech-subtitle">Score Distribution (histogram)</div>
+        <div id="dist-chart"></div>
+      </div>
+      <div class="an-panel">
+        <div class="an-panel-title">What Hoosiers Show Up For</div>
+        <div class="tech-subtitle">Category Breakdown by check-in count</div>
+        <div id="cat-chart"></div>
+      </div>
+    </div>
+
+    <!-- Row 4: Quartile Breakdown + Percentile Ranks -->
+    <div class="an-panels">
+      <div class="an-panel">
+        <div class="an-panel-title">Where Do You Fall?</div>
+        <div class="tech-subtitle">Quartiles: Q1, Q2 (median), Q3 with IQR</div>
+        <div class="boxplot-vals" id="bp-vals"></div>
+        <div class="boxplot-row" id="bp-row"><div class="bp-line"></div></div>
+        <div class="boxplot-labels" id="bp-labels"></div>
+        <div class="an-extra" id="an-extra"></div>
+      </div>
+      <div class="an-panel">
+        <div class="an-panel-title">Score Tiers This Week</div>
+        <div class="tech-subtitle">Percentile Ranks (P25, P50, P75, P90)</div>
+        <table class="pct-table">
+          <thead><tr><th>Percentile</th><th>Score Range</th><th>Range</th></tr></thead>
+          <tbody id="pct-tbody"><tr><td colspan="3" style="color:#9ca3af">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</main>
+
+
+<div class="modal-overlay" id="admin-login-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Admin Login</h2>
+      <button class="modal-close" data-close-modal="admin-login-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label for="admin-username">Username</label>
+          <input type="text" id="admin-username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" required autocomplete="current-password">
+        </div>
+        <div id="admin-login-alert" class="alert hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block mt-2">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<footer class="footer">
+  EngageIU &bull; Built for Luddy Hacks &bull; Indiana University &bull;
+  <a href="/docs">API Docs</a>
+</footer>
+
+<script src="/static/assets/app.js"></script>
+<script>
+function esc(str) {
+  return String(str === null || str === undefined ? '' : str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadAnalytics() {
+  try {
+    var d = await api('GET', '/info');
+    document.getElementById('loading-msg').style.display = 'none';
+    document.getElementById('analytics-body').style.display = '';
+
+    // Stat cards
+    document.getElementById('an-mean').textContent   = d.mean   != null ? d.mean   : '—';
+    document.getElementById('an-median').textContent = d.median != null ? d.median : '—';
+    document.getElementById('an-std').textContent    = d.std_deviation != null ? d.std_deviation : '—';
+    document.getElementById('an-avg').textContent    = d.avg_events_per_student != null ? d.avg_events_per_student : '—';
+
+    // Insights row
+    document.getElementById('ins-top-cat').textContent        = d.top_category || '—';
+    document.getElementById('ins-active-day').textContent     = d.most_active_day || '—';
+    document.getElementById('ins-total-students').textContent = d.total_students != null ? d.total_students : '—';
+    document.getElementById('ins-max-score').textContent      = d.max != null ? d.max + ' pts' : '—';
+
+    // Score distribution bars
+    var dist = d.score_distribution || [];
+    var maxCnt = Math.max.apply(null, dist.map(function(b){ return b.count; }).concat([1]));
+    document.getElementById('dist-chart').innerHTML = dist.length
+      ? dist.map(function(b) {
+          var pct = Math.round(b.count / maxCnt * 100);
+          return '<div class="dist-bar-row">' +
+            '<div class="dist-bar-label">' + esc(b.range) + '</div>' +
+            '<div class="dist-bar-track"><div class="dist-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="dist-bar-count">' + b.count + '</div></div>';
+        }).join('')
+      : '<div style="color:#9ca3af;font-size:0.85rem;padding:1rem 0">No data yet.</div>';
+
+    // Category breakdown chart
+    var cats = d.category_breakdown || [];
+    var maxCat = Math.max.apply(null, cats.map(function(c){ return c.count; }).concat([1]));
+    document.getElementById('cat-chart').innerHTML = cats.length
+      ? cats.map(function(c) {
+          var pct = Math.round(c.count / maxCat * 100);
+          var fillClass = 'dist-bar-fill cat-bar-fill-' + (c.category || 'General').replace(/[^a-zA-Z]/g,'');
+          return '<div class="dist-bar-row">' +
+            '<div class="dist-bar-label" style="width:80px">' + esc(c.category) + '</div>' +
+            '<div class="dist-bar-track"><div class="' + fillClass + ' dist-bar-fill" style="width:' + pct + '%"></div></div>' +
+            '<div class="dist-bar-count">' + c.count + '</div></div>';
+        }).join('')
+      : '<div style="color:#9ca3af;font-size:0.85rem;padding:1rem 0">No data yet.</div>';
+
+    // Box plot
+    var mn = d.min || 0, mx = d.max || 100, q1 = d.q1 || 0, q3 = d.q3 || 0, med = d.median || 0;
+    var rng = mx - mn || 1;
+    var pos = function(v) { return ((v - mn) / rng * 100).toFixed(1) + '%'; };
+    document.getElementById('bp-vals').innerHTML =
+      '<span>Min ' + mn + '</span><span>Q1 ' + q1 + '</span>' +
+      '<span>Median ' + med + '</span><span>Q3 ' + q3 + '</span><span>Max ' + mx + '</span>';
+    var row = document.getElementById('bp-row');
+    row.querySelectorAll('.bp-box,.bp-median,.bp-whisker-l,.bp-whisker-r').forEach(function(el){el.remove();});
+    var wl = document.createElement('div'); wl.className = 'bp-whisker-l'; wl.style.left = pos(mn); row.appendChild(wl);
+    var wr = document.createElement('div'); wr.className = 'bp-whisker-r'; wr.style.left = pos(mx); row.appendChild(wr);
+    var box = document.createElement('div'); box.className = 'bp-box';
+    box.style.left = pos(q1); box.style.width = Math.max(parseFloat(((q3-q1)/rng*100).toFixed(1)),2) + '%'; row.appendChild(box);
+    var medEl = document.createElement('div'); medEl.className = 'bp-median'; medEl.style.left = pos(med); row.appendChild(medEl);
+    document.getElementById('bp-labels').innerHTML = '<span>' + mn + '</span><span>' + mx + '</span>';
+
+    // Extra chips — no growth rate
+    var chips = [
+      {l:'IQR', v: d.iqr}, {l:'Range', v: d.range_val}, {l:'Variance', v: d.variance},
+      {l:'Top Campus', v: d.top_campus},
+      {l:'Most Attended', v: d.most_attended_event},
+    ];
+    document.getElementById('an-extra').innerHTML = chips.map(function(c) {
+      return '<div class="an-chip"><div class="cl">' + esc(c.l) + '</div><div class="cv">' + esc(c.v != null ? c.v : '—') + '</div></div>';
+    }).join('');
+
+    // Percentile ranks — rendered from backend pre-computed structure
+    var pctData = d.percentile_ranks || [];
+    document.getElementById('pct-tbody').innerHTML = pctData.length
+      ? pctData.map(function(r) {
+          return '<tr>' +
+            '<td><strong>' + esc(r.label) + '</strong> <span style="color:#9ca3af;font-size:0.75rem">(' + esc(r.description) + ')</span></td>' +
+            '<td>' + esc(r.score_range) + '</td>' +
+            '<td style="color:#6b7280;font-size:0.75rem">' + esc(r.pct_range) + '</td>' +
+          '</tr>';
+        }).join('')
+      : '<tr><td colspan="3" style="color:#9ca3af;padding:1rem">No data this week yet.</td></tr>';
+
+  } catch (e) {
+    document.getElementById('loading-msg').textContent = 'Failed to load analytics: ' + e.message;
+  }
+}
+
+loadAnalytics();
+setInterval(loadAnalytics, 60000);
+</script>
+</body>
+</html>

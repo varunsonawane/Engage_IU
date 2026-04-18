@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EngageIU · Campus Leaderboard</title>
+  <link rel="icon" type="image/png" href="https://assets.iu.edu/brand/3.3.x/trident-large.png">
+  <link rel="stylesheet" href="/static/assets/style.css">
+</head>
+
+<body class="home-page">
+
+  <nav class="nav">
+    <div class="nav-inner">
+      <a href="/" class="nav-brand">Engage<span>IU</span></a>
+      <div class="nav-links">
+        <a href="/" class="active">Home</a>
+        <a href="/static/events.html">Events</a>
+        <a href="/static/analytics.html">Hoosiers</a>
+        <a href="/static/admin.html" class="admin-nav-link hidden">Admin</a>
+      </div>
+      <div class="nav-actions">
+        <button class="btn btn-secondary btn-sm" id="btn-checkin">Check In</button>
+        <button class="btn btn-secondary btn-sm hidden" id="btn-admin-logout">Logout</button>
+        <button class="btn btn-secondary btn-sm" id="btn-admin-login">Admin</button>
+      </div>
+      <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <section class="hero">
+    <h1>Attend events.<br>Earn points.<br><span>Top the board.</span></h1>
+    <p>Enter your event code after attending any IU event<br>and climb the weekly leaderboard. Every check-in counts.</p>
+    <div class="hero-cta">
+      <button class="btn btn-hero-primary btn-lg" onclick="openModal('checkin-modal')">Check In Now &nbsp;→</button>
+      <a href="/static/events.html" class="btn btn-hero-outline btn-lg">Find Events</a>
+    </div>
+  </section>
+
+  <main class="container section home-card">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">🏆 This Week's Top Hoosiers</h2>
+        <p class="section-subtitle" id="week-label">Loading...</p>
+      </div>
+      <div class="refresh-label">
+        <span class="live-badge" id="live-badge">
+          <span class="live-dot"></span> LIVE
+        </span>
+        <a href="/leaderboard/export" download class="btn btn-outline btn-sm" style="font-size:0.78rem;padding:0.2rem 0.65rem">Export CSV</a>
+        <a href="/leaderboard?format=html" target="_blank" class="btn btn-outline btn-sm" style="font-size:0.78rem;padding:0.2rem 0.65rem">HTML View</a>
+      </div>
+    </div>
+
+    <!-- ── Top 3 Podium ─────────────────────────────────────── -->
+    <div id="podium-section" class="podium-wrap" style="display:none">
+      <div class="podium-stage">
+        <!-- 2nd place (left) -->
+        <div class="podium-spot spot-2" id="podium-spot-2">
+          <div class="podium-info">
+            <div class="podium-medal silver">2</div>
+            <div class="podium-avatar" id="pod-avatar-2"></div>
+            <div class="podium-name"  id="pod-name-2"></div>
+            <div class="podium-pts"   id="pod-pts-2"></div>
+            <div class="podium-evts"  id="pod-evts-2"></div>
+            <div class="podium-more"  id="pod-more-2" style="display:none"></div>
+          </div>
+          <div class="podium-popover" id="pod-popover-2"></div>
+          <div class="podium-block">2</div>
+        </div>
+        <!-- 1st place (centre) -->
+        <div class="podium-spot spot-1" id="podium-spot-1">
+          <div class="podium-info">
+            <div class="podium-medal gold">1</div>
+            <div class="podium-avatar" id="pod-avatar-1"></div>
+            <div class="podium-name"  id="pod-name-1"></div>
+            <div class="podium-pts"   id="pod-pts-1"></div>
+            <div class="podium-evts"  id="pod-evts-1"></div>
+            <div class="podium-more"  id="pod-more-1" style="display:none"></div>
+          </div>
+          <div class="podium-popover" id="pod-popover-1"></div>
+          <div class="podium-block">1</div>
+        </div>
+        <!-- 3rd place (right) -->
+        <div class="podium-spot spot-3" id="podium-spot-3">
+          <div class="podium-info">
+            <div class="podium-medal bronze">3</div>
+            <div class="podium-avatar" id="pod-avatar-3"></div>
+            <div class="podium-name"  id="pod-name-3"></div>
+            <div class="podium-pts"   id="pod-pts-3"></div>
+            <div class="podium-evts"  id="pod-evts-3"></div>
+            <div class="podium-more"  id="pod-more-3" style="display:none"></div>
+          </div>
+          <div class="podium-popover" id="pod-popover-3"></div>
+          <div class="podium-block">3</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <input type="text" id="search-input" placeholder="Search by name or username…" autocomplete="off">
+      <select id="campus-filter">
+        <option value="">All Campuses</option>
+        <option>IU Bloomington</option>
+        <option>IU Indianapolis</option>
+        <option>IU East</option>
+        <option>IU Kokomo</option>
+        <option>IU Northwest</option>
+        <option>IU South Bend</option>
+        <option>IU Southeast</option>
+        <option>IU Columbus</option>
+        <option>IU Fort Wayne</option>
+      </select>
+    </div>
+
+    <div class="lb-table-wrap">
+      <table class="lb-table">
+        <thead>
+          <tr>
+            <th style="width:60px">Rank</th>
+            <th>Name</th>
+            <th class="col-username">IU Username</th>
+            <th class="col-campus">Campus</th>
+            <th class="col-events">Events</th>
+            <th>Points</th>
+          </tr>
+        </thead>
+        <tbody id="lb-body">
+          <tr class="loading-row">
+            <td colspan="6"><span class="spinner"></span> Loading leaderboard…</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="checkin-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Event Check-In</h2>
+        <button class="modal-close" data-close-modal="checkin-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="checkin-form">
+          <div class="form-group">
+            <label for="ci-name">Full Name</label>
+            <input type="text" id="ci-name" placeholder="Jane Doe" required>
+          </div>
+          <div class="form-group">
+            <label for="ci-username">IU Username</label>
+            <input type="text" id="ci-username" placeholder="jdoe" required>
+          </div>
+          <div class="form-group">
+            <label for="ci-campus">Campus</label>
+            <select id="ci-campus" required></select>
+          </div>
+          <div class="form-group">
+            <label for="ci-code">Event Check-In Code</label>
+            <input type="text" id="ci-code" placeholder="e.g. INNOV2025" required
+              style="text-transform:uppercase;letter-spacing:1px;font-family:monospace">
+          </div>
+          <div id="checkin-alert" class="alert hidden"></div>
+          <div id="checkin-success" class="alert alert-success hidden"></div>
+          <button type="submit" class="btn btn-primary btn-block mt-2" id="checkin-submit">Check In</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="admin-login-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <h2>Admin Login</h2>
+        <button class="modal-close" data-close-modal="admin-login-modal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="admin-login-form">
+          <div class="form-group">
+            <label for="admin-username">Username</label>
+            <input type="text" id="admin-username" required autocomplete="username">
+          </div>
+          <div class="form-group">
+            <label for="admin-password">Password</label>
+            <input type="password" id="admin-password" required autocomplete="current-password">
+          </div>
+          <div id="admin-login-alert" class="alert hidden"></div>
+          <button type="submit" class="btn btn-primary btn-block mt-2">Login</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    EngageIU &bull; Built for Luddy Hacks &bull; Indiana University &bull;
+    <a href="/docs">API Docs</a>
+  </footer>
+
+  <script src="/static/assets/app.js"></script>
+  <script>
+    let lbData = [];
+    let searchMode = false;
+    let searchTimer = null;
+    let sseSource = null;
+    let podiumAnimated = false;
+    let podiumGroups = {};
+
+    function getInitials(name) {
+      return name.trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+    }
+
+    function closePodiumPopovers() {
+      document.querySelectorAll('.podium-popover').forEach(function(p) { p.classList.remove('open'); });
+    }
+
+    function showPodiumPopover(rank) {
+      closePodiumPopovers();
+      var group = podiumGroups[rank];
+      if (!group || group.length <= 1) return;
+      var popover = document.getElementById('pod-popover-' + rank);
+      var badge  = document.getElementById('pod-more-' + rank);
+      if (!popover || !badge) return;
+      // Build content first
+      popover.innerHTML = group.slice(1).map(function(p) {
+        return '<div class="podium-popover-item">' +
+          '<div class="podium-popover-avatar">' + getInitials(p.name) + '</div>' +
+          '<div class="podium-popover-info">' +
+            '<div class="podium-popover-name">' + escHtml(p.name) + '</div>' +
+            '<div class="podium-popover-sub">' + p.total_points + ' pts &middot; ' + p.events_attended + ' event' + (p.events_attended !== 1 ? 's' : '') + '</div>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+      // Anchor at 0,0 first so offsetWidth is measured correctly, then reposition
+      popover.style.left = '0px';
+      popover.style.top = '0px';
+      popover.style.transform = 'none';
+      popover.classList.add('open');
+      var rect = badge.getBoundingClientRect();
+      var popW = popover.offsetWidth || 200;
+      var left = rect.left + rect.width / 2 - popW / 2;
+      left = Math.max(8, Math.min(left, window.innerWidth - popW - 8));
+      popover.style.top  = (rect.bottom + 6) + 'px';
+      popover.style.left = left + 'px';
+    }
+
+    // Close on outside click
+    document.addEventListener('click', closePodiumPopovers);
+
+    // Wire up badge clicks once
+    [1, 2, 3].forEach(function(rank) {
+      var badge = document.getElementById('pod-more-' + rank);
+      if (badge) {
+        badge.addEventListener('click', function(e) {
+          e.stopPropagation();
+          showPodiumPopover(rank);
+        });
+      }
+    });
+
+    function renderPodium(rows) {
+      const section = document.getElementById('podium-section');
+      if (!rows || rows.length === 0) { section.style.display = 'none'; return; }
+      section.style.display = '';
+
+      // Group rows by rank (only care about top 3 ranks)
+      podiumGroups = {};
+      rows.forEach(function(r) {
+        if (r.rank >= 1 && r.rank <= 3) {
+          if (!podiumGroups[r.rank]) podiumGroups[r.rank] = [];
+          podiumGroups[r.rank].push(r);
+        }
+      });
+
+      [1, 2, 3].forEach(function(rank) {
+        var spot = document.getElementById('podium-spot-' + rank);
+        if (!spot) return;
+        var group = podiumGroups[rank];
+        if (!group || group.length === 0) { spot.style.visibility = 'hidden'; return; }
+        spot.style.visibility = '';
+        var data = group[0];
+        document.getElementById('pod-avatar-' + rank).textContent = getInitials(data.name);
+        document.getElementById('pod-name-'   + rank).textContent = data.name;
+        document.getElementById('pod-pts-'    + rank).textContent = data.total_points + ' pts';
+        document.getElementById('pod-evts-'   + rank).textContent = data.events_attended + ' event' + (data.events_attended !== 1 ? 's' : '');
+        var moreEl = document.getElementById('pod-more-' + rank);
+        if (group.length > 1) {
+          moreEl.textContent = '+' + (group.length - 1) + ' more';
+          moreEl.style.display = '';
+        } else {
+          moreEl.style.display = 'none';
+        }
+      });
+
+      if (!podiumAnimated) {
+        podiumAnimated = true;
+      } else {
+        section.querySelectorAll('.podium-block, .podium-info, .podium-avatar').forEach(function(el) {
+          el.style.animation = 'none';
+          void el.offsetWidth;
+          el.style.animation = '';
+        });
+      }
+    }
+
+    const lbBodyEl = document.getElementById('lb-body');
+    const weekLabelEl = document.getElementById('week-label');
+    const searchInput = document.getElementById('search-input');
+    const campusFilter = document.getElementById('campus-filter');
+
+    document.getElementById('ci-campus').innerHTML = campusOptions(false);
+
+    function escHtml(str) {
+      return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    function trendHtml(rc) {
+      if (rc === null || rc === undefined) return '';
+      if (rc > 0) return '<div class="rank-trend up">+' + rc + '</div>';
+      if (rc < 0) return '<div class="rank-trend down">' + rc + '</div>';
+      return '';
+    }
+
+    function risingTag(badges) {
+      if (badges && badges.includes('rising')) {
+        return ' <span class="entry-tag-rising">rising</span>';
+      }
+      return '';
+    }
+
+    function renderLeaderboard(rows) {
+      renderPodium(rows);  // full list so ties at each rank are captured
+      var tableRows = rows ? rows.filter(function(r) { return r.rank <= 10; }) : [];
+      if (!tableRows.length) {
+        lbBodyEl.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:2rem;color:#999">No entries yet this week.</td></tr>';
+        return;
+      }
+      lbBodyEl.innerHTML = tableRows.map(function(r) {
+        var nameSub = '<div class="name-sub">@' + escHtml(r.iu_username) + ' &middot; ' + escHtml(r.campus) + '</div>';
+        return '<tr class="' + (r.rank <= 3 ? 'rank-' + r.rank : '') + '">' +
+          '<td class="rank-cell">' + rankBadge(r.rank) + trendHtml(r.rank_change) + '</td>' +
+          '<td>' + escHtml(r.name) + risingTag(r.badges) + nameSub + '</td>' +
+          '<td class="col-username" style="color:#666;font-size:0.9rem">' + escHtml(r.iu_username) + '</td>' +
+          '<td class="col-campus"><span class="campus-badge">' + escHtml(r.campus) + '</span></td>' +
+          '<td class="col-events" style="text-align:center">' + r.events_attended + '</td>' +
+          '<td><span class="points-badge">' + r.total_points + '</span></td>' +
+          '</tr>';
+      }).join('');
+    }
+
+    function renderSearchResults(students) {
+      if (!students || students.length === 0) {
+        lbBodyEl.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:2rem;color:#999">No students found.</td></tr>';
+        return;
+      }
+      lbBodyEl.innerHTML = students.map((s, i) =>
+        '<tr>' +
+        '<td><span class="rank-num">' + (i + 1) + '</span></td>' +
+        '<td>' + escHtml(s.name) + '</td>' +
+        '<td style="color:#666;font-size:0.9rem">' + escHtml(s.iu_username) + '</td>' +
+        '<td><span class="campus-badge">' + escHtml(s.campus) + '</span></td>' +
+        '<td style="text-align:center">-</td>' +
+        '<td><span class="points-badge">' + s.weekly_points + '</span></td>' +
+        '</tr>'
+      ).join('');
+    }
+
+    async function loadLeaderboard() {
+      const campus = campusFilter.value;
+      let url = '/leaderboard' + (campus ? '?campus=' + encodeURIComponent(campus) : '');
+      try {
+        const data = await api('GET', url);
+        lbData = data.leaderboard || [];
+        weekLabelEl.textContent = 'Week of ' + formatWeekRange(data.week_start, data.week_end);
+        if (!searchMode) renderLeaderboard(lbData);
+      } catch (err) {
+        lbBodyEl.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:2rem;color:#c62828">Failed to load: ' + escHtml(err.message) + '</td></tr>';
+      }
+    }
+
+    function connectSSE() {
+      if (sseSource) sseSource.close();
+      const campus = campusFilter.value;
+      const url = BASE_URL + '/leaderboard/stream' + (campus ? '?campus=' + encodeURIComponent(campus) : '');
+      sseSource = new EventSource(url);
+      sseSource.onmessage = function(e) {
+        try {
+          const payload = JSON.parse(e.data);
+          lbData = payload.leaderboard || [];
+          if (payload.week_start) weekLabelEl.textContent = 'Week of ' + formatWeekRange(payload.week_start, payload.week_end);
+          if (!searchMode) renderLeaderboard(lbData);
+          document.getElementById('live-badge')?.classList.remove('disconnected');
+        } catch (_) {}
+      };
+      sseSource.onerror = function() {
+        document.getElementById('live-badge')?.classList.add('disconnected');
+        sseSource.close();
+        sseSource = null;
+        setTimeout(connectSSE, 3000);
+      };
+    }
+
+    async function doSearch(q) {
+      if (!q.trim()) { searchMode = false; renderLeaderboard(lbData); return; }
+      searchMode = true;
+      const campus = campusFilter.value;
+      let url = '/students/search?q=' + encodeURIComponent(q);
+      if (campus) url += '&campus=' + encodeURIComponent(campus);
+      try {
+        renderSearchResults(await api('GET', url));
+      } catch (err) {
+        lbBodyEl.innerHTML = '<tr><td colspan="6" class="text-center" style="padding:1rem;color:#c62828">Search error: ' + escHtml(err.message) + '</td></tr>';
+      }
+    }
+
+    searchInput.addEventListener('input', function() {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => doSearch(searchInput.value), 300);
+    });
+
+    campusFilter.addEventListener('change', function() {
+      if (searchMode) doSearch(searchInput.value);
+      else { loadLeaderboard(); connectSSE(); }
+    });
+
+    document.getElementById('btn-checkin').addEventListener('click', () => openModal('checkin-modal'));
+
+    document.getElementById('checkin-form').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const btn = document.getElementById('checkin-submit');
+      btn.disabled = true;
+      btn.textContent = 'Checking in...';
+      hideAlert('checkin-alert');
+      hideAlert('checkin-success');
+      const body = {
+        iu_username: document.getElementById('ci-username').value.trim().toLowerCase(),
+        name: document.getElementById('ci-name').value.trim(),
+        campus: document.getElementById('ci-campus').value,
+        check_in_code: document.getElementById('ci-code').value.trim().toUpperCase(),
+      };
+      try {
+        const res = await api('POST', '/checkin', body);
+        const msg = 'You earned ' + res.points_earned + ' pts for "' + res.event.title + '"! Total: ' + res.total_points + ' pts. Rank #' + res.current_rank;
+        document.getElementById('checkin-success').textContent = msg;
+        document.getElementById('checkin-success').classList.remove('hidden');
+        document.getElementById('checkin-form').reset();
+        document.getElementById('ci-campus').innerHTML = campusOptions(false);
+      } catch (err) {
+        showAlert('checkin-alert', err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Check In';
+      }
+    });
+
+    loadLeaderboard();
+    connectSSE();
+  </script>
+</body>
+
+</html>

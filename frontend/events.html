@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EngageIU · Events</title>
+  <link rel="icon" type="image/png" href="https://assets.iu.edu/brand/3.3.x/trident-large.png">
+  <link rel="stylesheet" href="/static/assets/style.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a href="/" class="nav-brand">Engage<span>IU</span></a>
+    <div class="nav-links">
+      <a href="/">Home</a>
+      <a href="/static/events.html" class="active">Events</a>
+      <a href="/static/analytics.html">Hoosiers</a>
+      <a href="/static/admin.html" class="admin-nav-link hidden">Admin</a>
+    </div>
+    <div class="nav-actions">
+      <button class="btn btn-secondary btn-sm hidden" id="btn-admin-logout">Logout</button>
+      <button class="btn btn-secondary btn-sm" id="btn-admin-login">Admin</button>
+    </div>
+    <button class="nav-hamburger" id="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<section class="hero" style="padding:2rem 1.5rem">
+  <h1 style="font-size:1.8rem">IU Events</h1>
+  <p style="margin-bottom:0">Attend events, collect codes, earn points on the leaderboard.</p>
+</section>
+
+<main class="container section">
+  <div class="section-header">
+    <div>
+      <h2 class="section-title">Upcoming Events</h2>
+      <p class="section-subtitle" id="events-count">Loading…</p>
+    </div>
+  </div>
+
+  <div class="filter-bar">
+    <select id="campus-filter">
+      <option value="">All Campuses</option>
+      <option>IU Bloomington</option>
+      <option>IU Indianapolis</option>
+      <option>IU East</option>
+      <option>IU Kokomo</option>
+      <option>IU Northwest</option>
+      <option>IU South Bend</option>
+      <option>IU Southeast</option>
+      <option>IU Columbus</option>
+      <option>IU Fort Wayne</option>
+    </select>
+    <label style="display:flex;align-items:center;gap:0.5rem;font-size:1.15rem;color:#555;cursor:pointer;font-weight:500;margin-left:auto">
+      <input type="checkbox" id="upcoming-toggle"> Show Past Events
+    </label>
+  </div>
+
+  <div class="events-grid" id="events-grid">
+    <div style="grid-column:1/-1;text-align:center;padding:3rem;color:#999">
+      <span class="spinner"></span> Loading events…
+    </div>
+  </div>
+</main>
+
+
+<button class="fab" id="fab-add-event" title="Add Event">+</button>
+
+<div class="modal-overlay" id="add-event-modal">
+  <div class="modal" style="max-width:540px">
+    <div class="modal-header">
+      <h2 id="event-modal-title">Add New Event</h2>
+      <button class="modal-close" data-close-modal="add-event-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="event-form">
+        <input type="hidden" id="event-edit-id">
+        <div class="form-group">
+          <label for="ev-title">Event Title</label>
+          <input type="text" id="ev-title" required placeholder="Hoosier Innovation Summit">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="ev-campus">Campus</label>
+            <select id="ev-campus" required></select>
+          </div>
+          <div class="form-group">
+            <label for="ev-points">Points</label>
+            <input type="number" id="ev-points" value="10" min="1" max="500" required>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="ev-date">Event Date &amp; Time</label>
+          <input type="datetime-local" id="ev-date" required>
+        </div>
+        <div class="form-group">
+          <label for="ev-url">Event URL (optional)</label>
+          <input type="url" id="ev-url" placeholder="https://events.iu.edu/…">
+        </div>
+        <div class="form-group">
+          <label for="ev-desc">Description (optional)</label>
+          <textarea id="ev-desc" rows="3" placeholder="Brief description of the event…"></textarea>
+        </div>
+        <div id="event-form-alert" class="alert hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block mt-2" id="event-form-btn">Create Event</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="admin-login-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Admin Login</h2>
+      <button class="modal-close" data-close-modal="admin-login-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="admin-login-form">
+        <div class="form-group">
+          <label for="admin-username">Username</label>
+          <input type="text" id="admin-username" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="admin-password">Password</label>
+          <input type="password" id="admin-password" required autocomplete="current-password">
+        </div>
+        <div id="admin-login-alert" class="alert hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block mt-2">Login</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+<div class="modal-overlay" id="checkin-modal">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div>
+        <h2>Check In</h2>
+        <div id="ci-event-label" style="font-size:0.8rem;opacity:0.85;margin-top:2px"></div>
+      </div>
+      <button class="modal-close" data-close-modal="checkin-modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <form id="checkin-form">
+        <div class="form-group">
+          <label for="ci-name">Full Name</label>
+          <input type="text" id="ci-name" placeholder="Jane Doe" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label for="ci-username">IU Username</label>
+          <input type="text" id="ci-username" placeholder="jdoe" required autocomplete="username">
+        </div>
+        <div class="form-group">
+          <label for="ci-campus">Campus</label>
+          <select id="ci-campus" required></select>
+        </div>
+        <div class="form-group">
+          <label for="ci-code">Check-In Code</label>
+          <input type="text" id="ci-code" placeholder="Enter code from the event" required
+            style="text-transform:uppercase;letter-spacing:2px;font-family:monospace;font-size:1.05rem">
+        </div>
+        <div id="checkin-alert" class="alert hidden"></div>
+        <div id="checkin-success" class="alert alert-success hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block mt-2" id="checkin-submit">Check In &amp; Earn Points</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  EngageIU &bull; Built for Luddy Hacks &bull; Indiana University &bull;
+  <a href="/docs">API Docs</a>
+</footer>
+
+<script src="/static/assets/app.js"></script>
+<script>
+let allEvents = [];
+let editingId = null;
+
+// Populate campus dropdown in event form
+document.getElementById('ev-campus').innerHTML = campusOptions(false);
+
+// ── Load events ───────────────────────────────────────────────────────────────
+
+async function loadEvents() {
+  const campus = document.getElementById('campus-filter').value;
+  const showPast = document.getElementById('upcoming-toggle').checked;
+  const upcomingOnly = !showPast;
+
+  let url = '/events?upcoming_only=' + upcomingOnly;
+  if (campus) url += '&campus=' + encodeURIComponent(campus);
+
+  // Always send auth header so admin gets check_in_code
+  const headers = {};
+  if (isAdmin()) headers['Authorization'] = 'Bearer ' + getToken();
+
+  try {
+    const res = await fetch(BASE_URL + url, { headers });
+    allEvents = await res.json();
+    renderEvents(allEvents);
+    document.getElementById('events-count').textContent =
+      `${allEvents.length} event${allEvents.length !== 1 ? 's' : ''} found`;
+  } catch (err) {
+    document.getElementById('events-grid').innerHTML =
+      `<div style="grid-column:1/-1;text-align:center;padding:3rem;color:#c62828">
+        Failed to load events: ${escHtml(err.message)}
+      </div>`;
+  }
+}
+
+function escHtml(str) {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function safeUrl(url) {
+  if (!url) return '';
+  return /^https?:\/\//i.test(url) ? url : 'https://' + url;
+}
+
+// ── Render event cards ────────────────────────────────────────────────────────
+
+function renderEvents(events) {
+  const grid = document.getElementById('events-grid');
+  if (!events.length) {
+    grid.innerHTML = `<div class="empty-state" style="grid-column:1/-1">
+      <p>No events found. Check back soon or adjust your filters.</p>
+    </div>`;
+    return;
+  }
+
+  grid.innerHTML = events.map((ev, i) => {
+    const dateStr = formatDate(ev.event_date);
+    const adminCode = isAdmin() && ev.check_in_code
+      ? `<div style="margin-top:0.5rem">
+          <span style="font-size:0.78rem;color:#999;text-transform:uppercase;letter-spacing:0.5px">Code:</span>
+          <span class="code-display" id="code-${ev.id}">${escHtml(ev.check_in_code)}</span>
+          <button class="btn btn-sm" onclick="copyCode('${escHtml(ev.check_in_code)}')" style="background:#f0f0f0;color:#333;margin-left:4px">Copy</button>
+        </div>`
+      : '';
+
+    const adminActions = isAdmin()
+      ? `<div class="admin-card-actions">
+          <button class="btn btn-sm btn-outline" onclick="openEditEvent(${ev.id})">Edit</button>
+          <button class="btn btn-sm" onclick="regenCode(${ev.id})"
+            style="background:#f0f0f0;color:#333">New Code</button>
+          <button class="btn btn-sm btn-danger" onclick="deleteEvent(${ev.id})">Delete</button>
+        </div>`
+      : '';
+
+    const url = safeUrl(ev.event_url);
+    const titleEl = url
+      ? `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:#fff;text-decoration:none">${escHtml(ev.title)}</a>`
+      : escHtml(ev.title);
+
+    return `
+      <div class="event-card" style="animation-delay:${i * 0.05}s">
+        <div class="event-card-header">
+          <h3>${titleEl}</h3>
+          ${adminCode}
+        </div>
+        <div class="event-card-body">
+          <div class="event-meta">
+            <span class="campus-badge">${escHtml(ev.campus)}</span>
+            <span>📅 ${dateStr}</span>
+            <span>👥 ${ev.attendees || 0} attended</span>
+          </div>
+          <p class="event-desc">${escHtml(ev.description || 'No description provided.')}</p>
+        </div>
+        <div class="event-card-footer">
+          <span class="points-badge">+${ev.points} pts</span>
+          <div style="display:flex;gap:0.4rem;flex-wrap:wrap">
+            ${url
+              ? `<a href="${url}" target="_blank" rel="noopener noreferrer" class="btn btn-sm btn-outline">View Event</a>`
+              : ''}
+            <button class="btn btn-sm btn-primary" onclick="openCheckin(${ev.id})">Check In</button>
+          </div>
+        </div>
+        ${adminActions}
+      </div>`;
+  }).join('');
+}
+
+function copyCode(code) {
+  navigator.clipboard.writeText(code).then(() => {
+    // Brief visual feedback
+    const allCodes = document.querySelectorAll('.code-display');
+    allCodes.forEach(el => {
+      if (el.textContent === code) {
+        el.style.background = '#e8f5e9';
+        setTimeout(() => { el.style.background = ''; }, 1000);
+      }
+    });
+  });
+}
+
+// ── Filters ───────────────────────────────────────────────────────────────────
+
+document.getElementById('campus-filter').addEventListener('change', loadEvents);
+document.getElementById('upcoming-toggle').addEventListener('change', loadEvents);
+
+// ── Admin: Add Event ──────────────────────────────────────────────────────────
+
+document.getElementById('fab-add-event').addEventListener('click', () => {
+  editingId = null;
+  document.getElementById('event-modal-title').textContent = 'Add New Event';
+  document.getElementById('event-form-btn').textContent = 'Create Event';
+  document.getElementById('event-form').reset();
+  document.getElementById('ev-campus').innerHTML = campusOptions(false);
+  hideAlert('event-form-alert');
+  openModal('add-event-modal');
+});
+
+function openEditEvent(id) {
+  const ev = allEvents.find(e => e.id === id);
+  if (!ev) return;
+  editingId = id;
+  document.getElementById('event-modal-title').textContent = 'Edit Event';
+  document.getElementById('event-form-btn').textContent = 'Save Changes';
+  document.getElementById('ev-title').value = ev.title || '';
+  document.getElementById('ev-campus').innerHTML = campusOptions(false, ev.campus);
+  document.getElementById('ev-points').value = ev.points || 10;
+  // Convert ISO to datetime-local value
+  if (ev.event_date) {
+    const dt = new Date(ev.event_date);
+    const local = new Date(dt.getTime() - dt.getTimezoneOffset() * 60000)
+      .toISOString().slice(0, 16);
+    document.getElementById('ev-date').value = local;
+  }
+  document.getElementById('ev-url').value = ev.event_url || '';
+  document.getElementById('ev-desc').value = ev.description || '';
+  hideAlert('event-form-alert');
+  openModal('add-event-modal');
+}
+
+document.getElementById('event-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = document.getElementById('event-form-btn');
+  btn.disabled = true;
+  hideAlert('event-form-alert');
+
+  const body = {
+    title: document.getElementById('ev-title').value.trim(),
+    campus: document.getElementById('ev-campus').value,
+    points: parseInt(document.getElementById('ev-points').value),
+    event_date: new Date(document.getElementById('ev-date').value).toISOString(),
+    event_url: document.getElementById('ev-url').value.trim() || null,
+    description: document.getElementById('ev-desc').value.trim() || null,
+  };
+
+  try {
+    if (editingId) {
+      await api('PATCH', `/events/${editingId}`, body, true);
+    } else {
+      await api('POST', '/events', body, true);
+    }
+    closeModal('add-event-modal');
+    loadEvents();
+  } catch (err) {
+    showAlert('event-form-alert', err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Admin: Regenerate Code ────────────────────────────────────────────────────
+
+async function regenCode(id) {
+  if (!confirm('Generate a new check-in code for this event? The old code will stop working immediately.')) return;
+  try {
+    const ev = await api('PATCH', `/events/${id}`, { regenerate_code: true }, true);
+    loadEvents();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// ── Admin: Delete Event ───────────────────────────────────────────────────────
+
+async function deleteEvent(id) {
+  const ev = allEvents.find(e => e.id === id);
+  const name = ev ? ev.title : `Event #${id}`;
+  if (!confirm(`Delete "${name}"? This will also remove all attendance records for this event.`)) return;
+  try {
+    await api('DELETE', `/events/${id}`, null, true);
+    loadEvents();
+  } catch (err) {
+    alert('Error: ' + err.message);
+  }
+}
+
+// ── Check-In ──────────────────────────────────────────────────────────────────
+
+document.getElementById('ci-campus').innerHTML = campusOptions(false);
+
+function openCheckin(eventId) {
+  const ev = allEvents.find(e => e.id === eventId);
+  document.getElementById('ci-event-label').textContent = ev ? ev.title : '';
+  // Pre-fill code for admin
+  if (isAdmin() && ev && ev.check_in_code) {
+    document.getElementById('ci-code').value = ev.check_in_code;
+  } else {
+    document.getElementById('ci-code').value = '';
+  }
+  hideAlert('checkin-alert');
+  document.getElementById('checkin-success').classList.add('hidden');
+  document.getElementById('checkin-form').reset();
+  // Restore campus after reset
+  document.getElementById('ci-campus').innerHTML = campusOptions(false);
+  if (isAdmin() && ev && ev.check_in_code) {
+    document.getElementById('ci-code').value = ev.check_in_code;
+  }
+  if (ev) document.getElementById('ci-event-label').textContent = ev.title;
+  openModal('checkin-modal');
+}
+
+document.getElementById('checkin-form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('checkin-submit');
+  btn.disabled = true;
+  hideAlert('checkin-alert');
+  document.getElementById('checkin-success').classList.add('hidden');
+  const body = {
+    iu_username: document.getElementById('ci-username').value.trim().toLowerCase(),
+    name: document.getElementById('ci-name').value.trim(),
+    campus: document.getElementById('ci-campus').value,
+    check_in_code: document.getElementById('ci-code').value.trim().toUpperCase(),
+  };
+  try {
+    const res = await api('POST', '/checkin', body);
+    const msg = `Checked in! You earned ${res.points_earned} pts. Total: ${res.total_points} pts · Rank #${res.current_rank}`;
+    const el = document.getElementById('checkin-success');
+    el.textContent = msg;
+    el.classList.remove('hidden');
+    document.getElementById('checkin-form').reset();
+    document.getElementById('ci-campus').innerHTML = campusOptions(false);
+    loadEvents();
+  } catch (err) {
+    showAlert('checkin-alert', err.message);
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+
+loadEvents();
+</script>
+</body>
+</html>
