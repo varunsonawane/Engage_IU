@@ -54,7 +54,7 @@ cd engageiu
 docker-compose up --build
 ```
 
-- App: http://engageiu.mooo.com (live) or http://localhost:8000 (local)
+- App: http://engageiu.mooo.com (live)
 - Interactive API docs: http://engageiu.mooo.com/docs
 - Admin panel: http://engageiu.mooo.com/admin
 
